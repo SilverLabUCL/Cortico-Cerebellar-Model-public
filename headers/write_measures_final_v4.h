@@ -8,12 +8,6 @@ void write_measures_final(nlohmann::json &json_measures, FTcomp &Cmp, double RMS
 	nlohmann::json json_tmp;
 
 	json_tmp.clear();
-	for (size_t i= 0; i < Cmp.dim_signal_pw.n_elem; i++) {
-		json_tmp.push_back(Cmp.dim_signal_pw.at(i));
-	}
-	json_measures["PWdim_signal_" + mode].push_back(json_tmp);
-
-	json_tmp.clear();
 	for (size_t i= 0; i < Cmp.subangles.n_elem; i++) {
 		json_tmp.push_back(Cmp.subangles.at(i));
 	}

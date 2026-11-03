@@ -64,7 +64,7 @@ int RK_cortex_weights_rhs(double t, const double X[], double dX_dt[], void *para
 	double eta_error = lr_normalized * para.error_signed_train;
 
 	for (int i=0; i<para.Ncx; i++){
-		dX_dt[para.Ncx+i]=-nuCx[i]*eta_error;//  -para.delta_eps_decay * X[para.Ncx+i];
+		dX_dt[para.Ncx+i]=-nuCx[i]*eta_error;
 	}
 
 	return GSL_SUCCESS;
@@ -136,9 +136,6 @@ int RK_cortex_cereb_weights_rhs(double t, const double hcxW[], double dhcxW_dt[]
 		}
 	}
 
-	// GC filtering
-	if(para.filterflag>0)	nuGC=filter_GCs(nuGC, para);
-
 	// feedback input
 	// closed loop: drive network with output signal
 	feedback=0;
@@ -178,13 +175,11 @@ int RK_cortex_cereb_weights_rhs(double t, const double hcxW[], double dhcxW_dt[]
 	r2=r2/double(para.Ngc);
 
 	// update the output weights
-	// double lr_normalized = para.delta_eta / (para.tau_avrg * r2);
 	double lr_normalized = para.delta_eta *para.lambda/ r2;
 	double eta_error = lr_normalized * para.error_signed_train;
-	//~ double eta_error = lr_normalized * para.error_signed_train/double(para.Ngc);
 
 	for (int i=0; i<para.Ngc; i++){
-		dhcxW_dt[para.Ncx+i]=-nuGC[i]*eta_error;// -para.delta_eps_decay * hcxW[para.Ncx+i];
+		dhcxW_dt[para.Ncx+i]=-nuGC[i]*eta_error;
 	}
 
 	return GSL_SUCCESS;
@@ -233,9 +228,6 @@ int RK_cortex_cereb_dyn_weights_rhs(double t, const double X[], double dX_dt[], 
 			for (int j=0; j<para.Ncomp_intf; j++)	nuGC[i]=nuGC[i]+input_intf[j]*para.Intf_weights.at(i,j);
 		}
 	}
-
-	// GC filtering
-	if(para.filterflag>0)	nuGC=filter_GCs(nuGC, para);
 
 	// feedback input
 	// closed loop: drive network with output signal
@@ -302,12 +294,11 @@ int RK_cortex_cereb_dyn_weights_rhs(double t, const double X[], double dX_dt[], 
 	r2=r2/double(para.Ngc);
 
 	// update the output weights
-	//~ double lr_normalized = para.delta_eta / (para.tau_avrg * r2);
 	double lr_normalized = para.delta_eta *para.lambda/ r2;
 	double eta_error = lr_normalized * para.error_signed_train;
 
 	for (int i=0; i<para.Ngc; i++){
-		dX_dt[para.Ncx+para.Ngc+i]=-nuGC[i]*eta_error; // -para.delta_eps_decay * X[i+para.Ncx+para.Ngc];
+		dX_dt[para.Ncx+para.Ngc+i]=-nuGC[i]*eta_error;
 	}
 
 	return GSL_SUCCESS;

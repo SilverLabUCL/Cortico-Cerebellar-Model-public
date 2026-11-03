@@ -135,9 +135,6 @@ void euler_step_cortex_cerebellum(double t, double hcx[], netpara &para) {
 		}
 	}
 
-	// GC filtering
-	if(para.filterflag>0)	para.nuGC=filter_GCs(para.nuGC, para);
-
 	//	RNN feedback input
 	if(para.closedloop==0){
 		// open loop: drive network with target signal
@@ -226,9 +223,6 @@ void euler_step_cortex_cerebellum_dyn(double t, double X[], netpara &para) {
 			for (int j=0; j<para.Ncomp_intf; j++)	para.nuGC[i]=para.nuGC[i]+input_intf[j]*para.Intf_weights.at(i,j);
 		}
 	}
-
-	// GC filtering
-	if(para.filterflag>0)	para.nuGC=filter_GCs(para.nuGC, para);
 
 	//	RNN feedback input
 	if(para.closedloop==0){

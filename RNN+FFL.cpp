@@ -12,8 +12,6 @@ namespace po = boost::program_options;
 #include "headers/functions.h"
 #include "headers/allstructs_v5.h"
 
-#include "headers/filter_coeff.h"
-#include "headers/filter_GCs_v2.h"
 #include "headers/target_signal_v6.h"
 #include "headers/euler_updates_v1.h"
 #include "headers/RK_rhs_v1.h"
@@ -22,7 +20,6 @@ namespace po = boost::program_options;
 #include "headers/RLS_step_cerebellum_allGCs_v3.h"
 #include "headers/calc_FT_v7.h"
 #include "headers/calc_floquet_RK_vector_v1.h"
-#include "headers/calc_connectivityEVs_v2.h"
 #include "headers/calc_artificial_overtones_v4.h"
 #include "headers/LS_solution_v4.h"
 #include "headers/adjust_thresholds_gains_v2.h"
@@ -42,13 +39,10 @@ int main (int argc, char* argv[]) {
 //	set parameters, flags, write to file & print some output
 //------------------------------------------------------------------------
 	struct netpara para;
-	para.version="cortex_cereb_only_v02";
+	para.version="RNN+FFL_public_v1.0";
 
 	// dummy parameters
-	para.learnmode2="none";
-	para.Npara2=1;
 	para.cortexonlyflag=0;
-	para.Ngc_act_out=NAN;
 
 	int rtidx=set_parameters_flags(para,argc,argv);
 	if(rtidx==1) return(0);
@@ -214,12 +208,6 @@ int main (int argc, char* argv[]) {
 			para.delta_eta=SCANPARA(np);
 			std::cout << "delta_eta = " << para.delta_eta << std::endl;
 		}
-		else if(para.learnflag==117){
-			para.Ngc=SCANPARA(np);
-			para.fc_avrg=double(para.Ngc_act)/double(para.Ngc);
-			para.Ngc_act_out=para.Ngc_act;
-			std::cout << "Ngc = " << para.Ngc << " with Ngc act = " << para.Ngc_act << " and f coding = " << para.fc_avrg <<std::endl;
-		}
 		else if(para.learnflag==118){
 			para.phi1=SCANPARA(np);
 			std::cout << "Phi1 = " << para.phi1 << std::endl;
@@ -242,9 +230,6 @@ int main (int argc, char* argv[]) {
 		}
 		else if(para.learnflag==128){
 			para.rho_Wfb12=SCANPARA(np);
-			//~ para.rho_Wfb={ 	{1, 				1, 	para.rho_Wfb12}, 				// 3x3
-							//~ {1, 				1, 	1},
-							//~ {para.rho_Wfb12, 	1, 	1} };
 			std::cout << "rho_Wfb_12 = " << para.rho_Wfb12 << std::endl;
 		}
 		else if(para.learnflag==129){
@@ -308,13 +293,6 @@ int main (int argc, char* argv[]) {
 	arma::colvec OUTvec(para.Tmax_learn);
 	arma::colvec Target(para.Tmax_learn);
 
-	if(para.filterflag>0){
-		para.butter.samplefreq=1.0/para.dt;
-		para.butter.cutoff=para.cutoff*para.lambda;
-		para.butter.fcf=para.cutoff*para.lambda/(para.butter.samplefreq/2.0);
-		para.butter.norder=para.norder;
-		filter_coeff(para.butter,para);
-	}
 	arma::running_stat<double> stats_hcx;
 	arma::running_stat<double> stats_nuCx;
 	arma::running_stat<double> stats_hgc;
@@ -398,7 +376,6 @@ int main (int argc, char* argv[]) {
 		RNNGCsys= {RK_cortex_cereb_dyn_rhs, NULL, nrnngc, &para};
 	}
 
-	//~ gsl_odeiv2_driver * RNNdriver = gsl_odeiv2_driver_alloc_y_new (&RNNsys, gsl_odeiv2_step_rk8pd,para.dt, para.INT_delta_abs,para.INT_delta_rel);
 	gsl_odeiv2_driver * RNNdriver = gsl_odeiv2_driver_alloc_y_new (&RNNsys, gsl_odeiv2_step_rkf45,para.dt, para.INT_delta_abs,para.INT_delta_rel);
 
 	gsl_odeiv2_driver * RNNGCdriver = gsl_odeiv2_driver_alloc_y_new (&RNNGCsys, gsl_odeiv2_step_rkf45,para.dt, para.INT_delta_abs,para.INT_delta_rel);
@@ -512,7 +489,6 @@ int main (int argc, char* argv[]) {
 
 			if(para.intrfflag==2){
 				// get data for FT
-				//~ for(int i= 0; i < para.Ncx; i++) RATES_FTtrans.at(i, t)= para.nuCx[i];
 				for(int i= 0; i < para.Ngc; i++) RATES_FTtrans.at(i, t)= para.nuGC[i];
 			}
 
@@ -619,11 +595,6 @@ int main (int argc, char* argv[]) {
 	gsl_odeiv2_driver_free (RNNGCdriver);
 
 //	**************************************************
-// 	Calculate effective connectivity EV spectrum (linear RNN and LS learning only)
-//	**************************************************
-	calc_connectivityEVs(para, json_measures, alg_steps_file);
-
-//	**************************************************
 //	cereb learning
 //	**************************************************
 	para.algswitch=2;
@@ -672,7 +643,6 @@ int main (int argc, char* argv[]) {
 				// initial state
 				for(int i= 0; i < para.Ncx; i++) hcxW[i]=hcx[i];
 				for(int i= 0; i < para.Ngc; i++) hcxW[i+para.Ncx]=para.Wout_PC[i];	// initial readout weights
-				//~ hcxW[para.Ngc+para.Ncx]=para.delta_eta;							// initial learning rate
 
 				status = gsl_odeiv2_driver_apply (RNNGCdriver_learn, &time, (tt-1)*para.dt, hcxW.data());
 				update_rates(time, hcxW.data(), para);
@@ -753,9 +723,7 @@ int main (int argc, char* argv[]) {
 
 				if (para.learnflag<99) {
 					if ((t % para.write_every)==0) {
-						//~ calc_wnorm_change(RLS_cereb, para.Ngc, para);
 						LR_file << RLS_cereb.LR << std::endl;
-						//~ LR_file << hcxW[para.Ncx+para.Ngc] << std::endl;
 						error_signed_train_file << para.error_signed_train << std::endl;
 						error_full_train_file << sqrt(stats_rmse.mean()) << std::endl;
 					}
@@ -776,9 +744,6 @@ int main (int argc, char* argv[]) {
 //	*************************
 //	test phase (always closed loop)
 //	*************************
-
-	//~ para.Wout_PC= arma::zeros<arma::vec>(para.Ngc); // test zero weights
-	//~ para.Wout_PC.randn();								// test random weights
 
 	gsl_odeiv2_driver * RNNGCdriver_test = gsl_odeiv2_driver_alloc_y_new (&RNNGCsys, gsl_odeiv2_step_rkf45,para.dt, para.INT_delta_abs,para.INT_delta_rel);
 
@@ -913,8 +878,6 @@ int main (int argc, char* argv[]) {
 //	**************************************************
 // 	Calculate Floquet multipliers
 //	**************************************************
-	//~ calc_floquet_RK(X_save, para, json_measures, alg_steps_file);
-
 	calc_floquet_RK_vector(X_save, para, json_measures, alg_steps_file);
 
 //	*************************

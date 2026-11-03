@@ -148,9 +148,6 @@ int RK_Floquet_cortex_cereb_rhs_vector(double t, const double X[], double dX_dt[
 		}
 	}
 
-	// GC filtering
-	if(para.filterflag>0)	nuGC=filter_GCs(nuGC, para);
-
 	//	feedback input
 	// open loop: drive network with target signal
 	if(para.floquetmodeflag==0) {
@@ -257,8 +254,6 @@ int RK_Floquet_cortex_cereb_rhs_vector(double t, const double X[], double dX_dt[
 		}
 		else if(para.actfuncflag==0 && para.actfuncflag_GC<2){
 			// tanh RNN & cereb ReLu or softplus
-			//~ arma::mat Weff=-para.I+para.Wcortex*arma::diagmat(dPHI)+para.Wrank1*arma::diagmat(dPSI)*(para.Wctxgc*arma::diagmat(dPHI) -para.Wgoc_distrb_scaled*arma::trans( dPHI%(nuCx-avrg_rate_mfs))/SD_rate_mfs);
-
 			arma::vec Y(para.Ncx);
 			for(int i= 0; i < para.Ncx; i++) {
 				Y[i]= dPHI[i]*(nuCx[i]-avrg_rate_mfs);
@@ -317,9 +312,6 @@ int RK_Floquet_cortex_cereb_dyn_rhs_vector(double t, const double X[], double dX
 			for (int j=0; j<para.Ncomp_intf; j++)	nuGC[i]=nuGC[i]+input_intf[j]*para.Intf_weights.at(i,j);
 		}
 	}
-
-	// GC filtering
-	if(para.filterflag>0)	nuGC=filter_GCs(nuGC, para);
 
 	//	feedback input
 	// open loop: drive network with target signal
@@ -564,7 +556,7 @@ if(para.floquetflag==1){
 		}
 
 		// scaled GoC weights
-		para.Wgoc_distrb_scaled=para.Wgoc_distrb/double(para.Ncx); // normalised by Ncx; this term come from the derivative w/r to the RNN inputs
+		para.Wgoc_distrb_scaled=para.Wgoc_distrb/double(para.Ncx); // normalised by Ncx; this term comes from the derivative w/r to the RNN inputs
 
 		// *************************************
 		// instantaneous GCs
@@ -702,19 +694,9 @@ if(para.floquetflag==1){
 		arma::vec tangent_vec(dX_dt.data(), nnet);
 
 		double tangent_norm2 = arma::dot(tangent_vec, tangent_vec);
-		//~ if (tangent_norm2 < 1e-12) {
-			//~ // trajectory is near-stationary: Floquet analysis unreliable
-			//~ std::cout << "WARNING: flow norm too small" << std::endl;
-			//~ // mu_max = arma::norm(vT);  // skip projection, report raw growth
-		//~ }
 		// project out trivial direction
 		arma::vec v_perp = vT - arma::dot(vT, tangent_vec) / arma::dot(tangent_vec, tangent_vec) * tangent_vec;
-		//~ arma::vec v_perp = vT ;
 
-		//~ double v_perp_norm = arma::norm(v_perp);
-		//~ if (v_perp_norm < 1e-12) {
-			//~ std::cout << "WARNING: v_perp near zero — strong contraction or numerical underflow" << std::endl;
-		//~ }
 		// accumulate log growth
 		log_growth += std::log(arma::norm(v_perp));
 

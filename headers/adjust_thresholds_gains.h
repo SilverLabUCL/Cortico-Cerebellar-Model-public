@@ -10,7 +10,6 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 	if(para.fcodingflag==1){
 		arma::vec FC={1.0-para.fc_avrg};
 		arma::vec Q = arma::quantile(arma::vectorise(RATE_Fadj_hGC),FC);
-		//~ std::cout << Q << std::endl;
 		para.GCthreshold=0;
 		for(int i= 0; i < para.Ngc; i++){
 			theta[i] =Q[0];
@@ -21,16 +20,10 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 	////////////////////////////////////////////////////
 	// adjust GC thresholds locally
 	else if (para.fcodingflag==2) {
-		//~ arma::vec FC={1.0-fc_avrg};
-		//~ arma::vec Q = arma::quantile(RATE_Fadj_hGC,FC,1);
-		//~ for(int i= 0; i < para.Ngc; i++){
-			 //~ theta[i] =Q(i);
-		//~ }
 		para.GCthreshold=0;
 		for(int i= 0; i < para.Ngc; i++){
 			arma::vec FC={1.0-ftarget[i]};
 			arma::vec Q = arma::quantile(RATE_Fadj_hGC.row(i),FC);
-			//~ std::cout << Q << std::endl;
 			theta[i] =Q[0];
 			para.GCthreshold+=theta[i];
 		}
@@ -38,7 +31,6 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 	}
 	if(para.actfuncflag_GC==2 || para.actfuncflag_GC==3) {
 		para.GCthreshold=0;
-		//~ theta.zeros();
 		for(int i= 0; i < para.Ngc; i++){
 			theta[i] =0;
 		}
@@ -59,20 +51,16 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 		for(int i= 0; i < para.Ngc; i++) {
 			gain[i]=para.GCgain;
 		}
-		//~ std::cout << arma::stddev(arma::vectorise(RATE_Fadj_hGC)) << "\t"<<arma::stddev(arma::vectorise(RATE_Fadj_GC)) << "\t"<<para.GCgain << std::endl;
 	}
 	////////////////////////////////////////////////////
 	// local gain adjustment (match individual SDs)
 	else if(para.gainflag==2){
 		for(int i= 0; i < para.Ngc; i++) {
 			gain[i]=arma::stddev(RATE_Fadj_hGC.row(i) )/arma::stddev(RATE_Fadj_GC.row(i));
-			//~ gain[i]=arma::stddev(RATE_Fadj_nuCx.row(i) )/arma::stddev(RATE_Fadj_GC.row(i));
 		}
 		// set non-finite elements to zero
 		gain.elem( arma::find_nonfinite(gain) ).zeros();
 		// remove extreme gain values
-		//~ double meanGain=arma::mean(gain);
-		//~ double Gaindeviation=meanGain+para.tol_GCgain*arma::stddev(gain);
 		double medianGain=arma::median(gain);
 		double Gaindeviation=para.tol_GCgain*medianGain;
 		for(int i= 0; i < para.Ngc; i++) {
@@ -93,26 +81,16 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 	////////////////////////////////////////////////////
 	// gains = inverse 1st spanning vector norm
 	else if(para.gainflag==4){
-		// compute theoretical spanning vector norm for linear RNN with cos-signal (Ncomp=1)
-		//~ double eps=1.0-para.g;
-		//~ double nvp_0=sqrt(para.Ncx/eps);
-		//~ double omega=para.lambda*para.tau*2*M_PI;
-		//~ double nvp=sqrt(para.Ncx*( eps*eps +omega*omega *(2-eps) )/( ( (eps-omega*omega)*(eps-omega*omega) +4*omega*omega )*(eps+omega*omega) ));
-		//~ para.GCgain=nvp_0/nvp;
-
 		// downsample arrays to get data for FT
 		int tFT=0;
 		for(int t= 0; t < Tmax_Fadj; t++){
 			bool bool_time_FT=( (t % para.SVD_FT_every)==0);
 			if (bool_time_FT && (tFT< FT_Fadj_tsteps) ){
 				for(int i= 0; i < para.Ngc; i++) RATE_Fadj_GC_FT.at(i, tFT)= RATE_Fadj_GC.at(i, t);
-				//~ for(int i= 0; i < para.Ncx; i++) RATE_Fadj_nuCx_FT.at(i, tFT)= RATE_Fadj_nuCx.at(i, t);
 				tFT++;
 			}
 		}
 
-		//~ FTcomp FT_Fadj_comp_cx;
-		//~ calc_FT(RATE_Fadj_nuCx_FT, FT_Fadj_comp_cx, para, FT_Fadj_tsteps,"cereb");
 		FTcomp FT_Fadj_comp_gc;
 		calc_FT(RATE_Fadj_GC_FT, FT_Fadj_comp_gc, para, FT_Fadj_tsteps,"cereb");
 		if(FT_Fadj_comp_gc.nn_signal(0)<0.000001) {
@@ -157,57 +135,6 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 			}
 		}
 	}
-	////////////////////////////////////////////////////
-	// first step: local gain adjustment (match individual SDs)
-	// second step: increase/decrease gain globally such as to match 1st spanning vector norms
-	//~ else if(para.gainflag==6){
-		//~ // local adjustment (match individual SDs)
-		//~ for(int i= 0; i < para.Ngc; i++) {
-			//~ gain[i]=arma::stddev(RATE_Fadj_hGC.row(i) )/arma::stddev(RATE_Fadj_GC.row(i));
-		//~ }
-		//~ // set non-finite elements to zero
-		//~ gain.elem( arma::find_nonfinite(gain) ).zeros();
-		//~ // remove extreme gain values
-		//~ double medianGain=arma::median(gain);
-		//~ double Gaindeviation=para.tol_GCgain*medianGain;
-		//~ for(int i= 0; i < para.Ngc; i++) {
-			//~ if(gain[i]>Gaindeviation) gain[i]=medianGain;
-		//~ }
-
-		//~ // re-calculate GC activity for 2nd gain adjustment
-		//~ for(int t= 0; t < Tmax_Fadj; t++){
-			//~ for(int i= 0; i < para.Ngc; i++) {
-				//~ RATE_Fadj_GC.at(i, t)=gain[i]*(*para.Ptr_gcIO) (RATE_Fadj_hGC.at(i, t)-theta[i],para.sp_alpha);
-			//~ }
-		//~ }
-		//~ // downsample arrays to get data for FT
-		//~ int tFT=0;
-		//~ for(int t= 0; t < Tmax_Fadj; t++){
-			//~ bool bool_time_FT=( (t % para.SVD_FT_every)==0);
-			//~ if (bool_time_FT && (tFT< FT_Fadj_tsteps) ){
-				//~ for(int i= 0; i < para.Ngc; i++) RATE_Fadj_GC_FT.at(i, tFT)= RATE_Fadj_GC.at(i, t);
-				//~ for(int i= 0; i < para.Ncx; i++) RATE_Fadj_nuCx_FT.at(i, tFT)= RATE_Fadj_nuCx.at(i, t);
-				//~ tFT++;
-			//~ }
-		//~ }
-
-		//~ // global adjustment to match 1st spanning vector
-		//~ FTcomp FT_Fadj_comp_cx;
-		//~ calc_FT(RATE_Fadj_nuCx_FT, FT_Fadj_comp_cx, para, FT_Fadj_tsteps);
-		//~ FTcomp FT_Fadj_comp_gc;
-		//~ calc_FT(RATE_Fadj_GC_FT, FT_Fadj_comp_gc, para, FT_Fadj_tsteps);
-		//~ if(FT_Fadj_comp_gc.nn_signal(0)<0.000001) {
-			//~ for(int i= 0; i < para.Ngc; i++) {
-				//~ gain[i]=0.0;
-			//~ }
-		//~ }
-		//~ else{
-			//~ for(int i= 0; i < para.Ngc; i++) {
-				//~ gain[i]=gain[i]*FT_Fadj_comp_cx.nn_signal(0)/FT_Fadj_comp_gc.nn_signal(0);
-			//~ }
-		//~ }
-
-	//~ }
 	////////////////////////////////////////////////////
 	// first step: local gain adjustment (match every FC to RNN population SD)
 	// second step: increase/decrease gain globally such as to match 1st spanning vector norms
@@ -269,7 +196,6 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 		for(int i= 0; i < para.Ngc; i++) {
 			double GCmax=arma::max(RATE_Fadj_GC.row(i));
 			gain[i]=para.GCmax/GCmax;
-			//~ std::cout << "GCgain = " << gain[i]<< "\t GCmax = " << GCmax << std::endl;
 		}
 		// set non-finite elements to zero
 		gain.elem( arma::find_nonfinite(gain) ).zeros();
@@ -280,7 +206,6 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 			if(gain[i]>Gaindeviation)		gain[i]=medianGain;
 			if(gain[i]>para.GCgainmax)		gain[i]=para.GCgainmax;
 		}
-
 	}
 
 		////////////////////////////////////////////////////
@@ -296,7 +221,6 @@ void adjust_thresholds_gains(arma::mat& RATE_Fadj_hGC, arma::mat& RATE_Fadj_nuCx
 			double GCmax=arma::max(RATE_Fadj_GC.row(i));
 			RNNmax=arma::shuffle(RNNmax);
 			gain[i]=RNNmax.at(0)/GCmax;
-			//~ std::cout << "GCgain = " << gain[i]<< "\t GCmax = " << GCmax << std::endl;
 		}
 		// set non-finite elements to zero
 		gain.elem( arma::find_nonfinite(gain) ).zeros();

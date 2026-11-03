@@ -17,8 +17,6 @@ double func_target_intf(double t, int idx_intf, netpara &para){
 
 void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_file, std::ofstream &phase_file, std::ofstream &freq_intf_file, std::ofstream &amp_intf_file, std::ofstream &phase_intf_file, std::ofstream &alg_steps_file) {
 
-	// removed random target signals
-
 	int Tmax_learn=para.Tmax_learn;
 	int Tmax_test=para.Tmax_test;
 	int Tmax_FT=para.Tmax_FT;
@@ -56,11 +54,7 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 
 	// Mix of 4 sine waves from Sussillo & Abbott 2009, Fig 2d; the original signal is obtained for lambda=0.8;
 	if (para.signalflag==0){
-		//~ double amp = 1.3;
 		double amp = 1.6;
-		//~ double amp = sigAmp;
-		//~ double freq[] = {5.0/3.0, 2.5, 10.0/3.0, 1.4286};
-		//~ double freq[] = {1.6};
 		for(int t= 0; t < Tmax_learn; t++) {
 			para.target[t] = 	(amp/1.0)*sin(2.0*M_PI*para.lambda*t*para.dt) + (amp/2.0)*sin(2.0*M_PI*2*para.lambda*t*para.dt)
 								+ (amp/6.0)*sin(2.0*M_PI*3*para.lambda*t*para.dt) + (amp/3.0)*sin(2.0*M_PI*4*para.lambda*t*para.dt);
@@ -100,10 +94,6 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 		amp_file << std::endl;
 		phase_file << std::endl;
 
-		//~ for(int j= 0; j < Ncomp; j++) {
-			//~ para.amps_func(j) =amp(j);
-			//~ para.phases_func(j) =phase(j);
-		//~ }
 	}
 	// cos (or sin) waves with Ncomp components with fixed parameters
 	else if(para.signalflag==23 || para.signalflag==22){
@@ -134,28 +124,22 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 		}
 		// frequencies
 		for(int j= 0; j < Ncomp; j++) {
-			freq(j)=double(para.nf*j+1)*para.lambda;		// overtones = integer multiple of base frequency
+			freq(j)=double(j+1)*para.lambda;		// overtones = integer multiple of base frequency
 		}
 		// interference frequencies
 		for(int j= 0; j < Ncomp_intf; j++) {
-			freq_intf(j)=double(para.nf*j+1)*para.lambda;
-			//~ freq_intf(j)=double(j+2)*para.lambda;
-			//~ freq_intf(j)=para.lambda;
+			freq_intf(j)=double(j+1)*para.lambda;
 		}
 		// norm of amplitudes
 		int Ncomp_eff;
 		if(Ncomp_intf>0)	Ncomp_eff=accu(para.amps.rows(0, Ncomp-1) != 0)+accu(para.amps_intf.rows(0, Ncomp_intf-1) != 0);
 		else 				Ncomp_eff=accu(para.amps.rows(0, Ncomp-1) != 0);
 		double ampnorm=sqrt(double(Ncomp_eff));
-		//~ std::cout << Ncomp <<'\t' << Ncomp_eff <<'\t'<<ampnorm << std::endl;
 
 		// amplitudes
 		for(int j= 0; j < Ncomp; j++) {
 			amp(j)=para.sigAmp*para.amps(j)/ampnorm;
-			//~ std::cout << "amp = "<< amp(j) << std::endl;
 		}
-		//~ amp[0]=para.sigAmp*(1-para.ampmod)*amps(0)/ampnorm;
-		//~ amp[1]=para.sigAmp*(1+para.ampmod)*amps(1)/ampnorm;
 		for(int j= 0; j < Ncomp_intf; j++) {
 			amp_intf(j)=para.sigAmp_intf*para.amps_intf(j)/ampnorm;
 		}

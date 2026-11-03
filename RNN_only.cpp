@@ -13,7 +13,6 @@ namespace po = boost::program_options;
 #include "headers/functions.h"
 #include "headers/allstructs_v5.h"
 
-#include "headers/filter_GCs_v2.h"
 #include "headers/target_signal_v6.h"
 #include "headers/euler_updates_v1.h"
 #include "headers/RK_rhs_v1.h"
@@ -22,7 +21,6 @@ namespace po = boost::program_options;
 #include "headers/RLS_step_cortex_v3.h"
 #include "headers/calc_FT_v7.h"
 #include "headers/calc_floquet_RK_vector_v1.h"
-#include "headers/calc_connectivityEVs_v2.h"
 #include "headers/LS_solution_v4.h"
 #include "headers/generate_weights_v3.h"
 #include "headers/output_calculations_v2.h"
@@ -39,7 +37,7 @@ int main (int argc, char* argv[]) {
 //	set parameters, flags, write to file & print some output
 //------------------------------------------------------------------------
 	struct netpara para;
-	para.version="cortex_only_v06";
+	para.version="RNN_only_public_v1.0";
 
 	int rtidx=set_parameters_flags(para,argc,argv);
 	if(rtidx==1) return(0);
@@ -287,7 +285,6 @@ int main (int argc, char* argv[]) {
 	size_t nrnn = static_cast<size_t>(para.Ncx);
   	gsl_odeiv2_system RNNsys = {RK_cortex_rhs, NULL, nrnn, &para};
 
-	//~ gsl_odeiv2_driver * RNNdriver = gsl_odeiv2_driver_alloc_y_new (&RNNsys, gsl_odeiv2_step_rk8pd,para.dt, para.INT_delta_abs,para.INT_delta_rel);
 	gsl_odeiv2_driver * RNNdriver = gsl_odeiv2_driver_alloc_y_new (&RNNsys, gsl_odeiv2_step_rkf45,para.dt, para.INT_delta_abs,para.INT_delta_rel);
 
 	//	*************************
@@ -376,11 +373,6 @@ int main (int argc, char* argv[]) {
 	}
 
 	gsl_odeiv2_driver_free (RNNdriver);
-
-//	**************************************************
-// 	Calculate effective connectivity EV spectrum (linear RNN and LS learning only)
-//	**************************************************
-	calc_connectivityEVs(para, json_measures, alg_steps_file);
 
 //	**************************************************
 //	ctx learning
@@ -472,9 +464,7 @@ int main (int argc, char* argv[]) {
 
 				if (para.learnflag<99) {
 					if ((t % para.write_every)==0) {
-						//~ calc_wnorm_change(RLS_ctx, para.Ncx, para);
 						LR_file << RLS_ctx.LR << std::endl;
-						//~ LR_file << et << std::endl;
 						error_signed_train_file << para.error_signed_train << std::endl;
 						error_full_train_file << sqrt(stats_rmse.mean()) << std::endl;
 					}
@@ -604,8 +594,6 @@ int main (int argc, char* argv[]) {
 //	**************************************************
 // 	Calculate Floquet multipliers
 //	**************************************************
-	//~ calc_floquet_RK(hcx_save, para, json_measures, alg_steps_file);
-
 	calc_floquet_RK_vector(hcx_save, para, json_measures, alg_steps_file);
 
 //	*************************
@@ -706,7 +694,7 @@ int main (int argc, char* argv[]) {
 	// calculate Fourier components & FT dimensionality
 	alg_steps_file << "\t \t \t Fourier analysis" << std::endl;
 	FTcomp FTcomp_ctx;
-	calc_FT(RATES_FT, FTcomp_ctx, para, para.Tmax_FT,"ctx");//,para.sigmaLS*para.FACsigmaLS_ctx);		// ADJUST LAST ARGUMENT FOR RLS CASE (i.e. test-phase noise)
+	calc_FT(RATES_FT, FTcomp_ctx, para, para.Tmax_FT,"ctx");
 
 	// calculate dimensionality
 	alg_steps_file << "\t \t \t Calculate dimensionality" << std::endl;
@@ -726,7 +714,6 @@ int main (int argc, char* argv[]) {
 		DEVT(t)=arma::norm(INPUTS_OPEN.col(t)-INPUTS_CLOSED.col(t));
 		OPENR(t)=arma::norm(INPUTS_OPEN.col(t));
 	}
-	//~ double rmse_traj= arma::mean(DEVT)/sqrt(INPUTS_OPEN.n_rows);
 	double rmse_traj= arma::mean(DEVT)/arma::mean(OPENR);
 	json_measures["Traj_rmse_"].push_back(rmse_traj);
 

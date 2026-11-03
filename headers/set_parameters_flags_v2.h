@@ -9,11 +9,9 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.Ngc=500;				// number of GCs
 	para.Nmf=para.Ncx;			// number of MFs
 	para.Nsyn=4;				// number of MF synpases onto each GC
-	para.Ngc_act=400;			// average fraction of active GCs (for Ngc_active scan)
 	para.lambda=5;				// signal fundamental frequency
 	para.Ncomp=1;				// number of components of combined sine/cosine signal
 	para.Ncomp_intf=2;			// number of components of interference signal
-	para.nf=1;					// spacing between frequency components (nf=1: every overtones, nf=2: every second overtone, etc.)
 	para.g=0.9;
 	para.seed=-1;				// default random number seeds
 	para.Nreal=10;				// number of network realisations
@@ -29,17 +27,14 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.rho_Wfb12=1;			//
 	para.rho_Wfb13=1;			//
 	para.write_every=20;		// read out every nth time step
-	para.outlier_thresh=1.1;    // factor determining outlier detection threshold
 
 	para.delta_eta=0.0025;		// initial learning rate for DELTA rule
-	para.delta_eps_decay=1e-5;	// weight decay parameter for DELTA rule
 	para.delta_r2_reg=1e-6;		// norm regularisation for DELTA rule
 
 	para.INT_delta_abs=1e-3;	// integrator absolute error
 	para.INT_delta_rel=1e-3;	// integrator relative error
 
 	para.GCgain_base=1;
-	//~ para.GCgainmax=10;		// maximum allowed GC gain
 	para.GCgainmax=5000;		// maximum allowed GC gain
 	para.GCmax=1;				// maximum GC firing rate
 
@@ -51,7 +46,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.sigAmp_intf=1.0;		// global amplitude multiplier (interference signal)
 
 	para.amps={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};	// all amplitudes of signal / interference signals
-	//~ para.amps=para.amps*sqrt(2);
 	para.amps_intf={0.0,1.0,1.0,1.0,1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
 	para.phases={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};		// all phases of signal / interference signals
@@ -63,8 +57,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.noisescaling="none";
 	// learn mode: 'cortex', 'cerebellum', 'none', 'repeat' or 'scan_...'
 	para.learnmode="cortex";
-	// learn mode: 'scan_...'
-	para.learnmode2="scan_lambda";
 	// learning rule: 'RLS', 'LS', 'RR', 'PINV' or 'DELTA'
 	para.learningrule="LS";
 	// testphase in 'closed' or 'open' loop or with open loop with noise exclusively: 'open noise'
@@ -81,8 +73,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.gainmode="fixed";
 	// GoC mode: 'ON', 'OFF' or 'HETERO'
 	para.GoC_mode="OFF";
-	// apply Butterworth filter to GC activity: 'low', 'high', 'band', 'stop', 'OFF' // high, stop and band NOT IMPLEMENTED YET
-	para.GCfilter="OFF";
 	// add interference signal: 'ON', 'OFF' or 'GCs'
 	para.interference_signal="OFF";
 	// cortical tau distribution: 'ON' or 'OFF'
@@ -104,7 +94,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			("help", "produce help message")
 			("signaltype", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.signaltype), "target signal: 'quadruple_sine', 'accordion', 'cosine_fixed'... ")
 			("learnmode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learnmode), "learn mode: 'cortex', 'cerebellum', 'none', 'repeat' or 'scan_...' ")
-			("learnmode2", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learnmode2), "learn mode: 'scan_...' ")
 			("LRule", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learningrule), "learning rule: 'RLS', 'LS', 'RR', 'PINV' or 'DELTA' ")
 			("noise", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.noisescaling), "noise (scaling with firing rate): 'constant', 'proportional' or 'none' ")
 			("loop_test", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.loop_test), "loop type during test-phase: 'closed' or 'open'")
@@ -113,7 +102,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			("MF_GC_connect", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.MF_GC_connect), "MF to GC connectivity: 'mixing' or 'simple' ")
 			("fcodingmode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.fcodingmode), "GC coding level (global, local or fix threshold): 'global', 'local', 'fixed' ")
 			("gainmode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.gainmode), "GC gain: 'global', 'local', 'fixed', 'inverse_norm', 'matched_vectors', 'local_matched' ")
-			("GCfilter", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.GCfilter), "Butterworth filter GC activity: 'low', 'high', 'band', 'stop', 'OFF' // high, stop and band NOT IMPLEMENTED YET ")
 			("interference_signal", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.interference_signal), "add interference signal: 'ON', 'OFF' or 'GCs' ")
 			("GoC_mode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.GoC_mode), "Golgi cell: 'ON', 'OFF', 'HETERO' or 'MFSD' ")
 			("tau_mode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.tau_mode), "distribute RNN taus: 'ON' or 'OFF' ")
@@ -127,7 +115,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			("Nmf", po::value<int>(&para.Nmf)->default_value(para.Nmf), "number of Mfs")
 			("Ncomp", po::value<int>(&para.Ncomp)->default_value(para.Ncomp), "number of signal frequency components")
 			("Ncomp_intf", po::value<int>(&para.Ncomp_intf)->default_value(para.Ncomp_intf), "number of interference signal frequency components")
-			("nf", po::value<int>(&para.nf)->default_value(para.nf), "spacing between frequency components")
 			("g", po::value<double>(&para.g)->default_value(para.g), "reccurent weight parameter")
 			("lambda", po::value<double>(&para.lambda)->default_value(para.lambda), "signal fundamental frequency")
 			("T_learn", po::value<double>(&para.duration_learn)->default_value(para.duration_learn), "length of learning phase (i.e. number of periods)")
@@ -153,7 +140,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			("dt_euler", po::value<double>(&para.DT_euler)->default_value(para.DT_euler), "integration time step of euler test-phase")
 			("GCgainmax", po::value<double>(&para.GCgainmax)->default_value(para.GCgainmax), "maximum GC gain")
 			("GCgain", po::value<double>(&para.GCgain_base)->default_value(para.GCgain_base), "GC gain")
-			("outlier_threshold", po::value<double>(&para.outlier_thresh)->default_value(para.outlier_thresh), "factor determining outlier detection threshold")
 			("delta_eta", po::value<double>(&para.delta_eta)->default_value(para.delta_eta), "initial learning rate for DELTA rule")
 			("INT_delta_abs", po::value<double>(&para.INT_delta_abs)->default_value(para.INT_delta_abs), "target absolute error for numerical integration")
 			("INT_delta_rel", po::value<double>(&para.INT_delta_rel)->default_value(para.INT_delta_rel), "target relative error for numerical integration")
@@ -176,10 +162,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 		if (vm["learnmode"].defaulted()==0)  {
 			tmp=vm["learnmode"].as< std::vector<std::string> >();
 			para.learnmode= tmp[0];
-		}
-		if (vm["learnmode2"].defaulted()==0)  {
-			tmp=vm["learnmode2"].as< std::vector<std::string> >();
-			para.learnmode2= tmp[0];
 		}
 		if (vm["LRule"].defaulted()==0)  {
 			tmp=vm["LRule"].as< std::vector<std::string> >();
@@ -212,10 +194,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 		if (vm["gainmode"].defaulted()==0)  {
 			tmp=vm["gainmode"].as< std::vector<std::string> >();
 			para.gainmode= tmp[0];
-		}
-		if (vm["GCfilter"].defaulted()==0)  {
-			tmp=vm["GCfilter"].as< std::vector<std::string> >();
-			para.GCfilter= tmp[0];
 		}
 		if (vm["GoC_mode"].defaulted()==0)  {
 			tmp=vm["GoC_mode"].as< std::vector<std::string> >();
@@ -259,11 +237,8 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	}
 
 	// target folders
-	para.path="sim/";
-	para.path2D="sim2D/";
+	para.path="simulation_results/";
 	para.path_connect="connectivity/";
-	//~ para.path="sim2/";
-	//~ para.path_connect="connectivity2/";
 
 //------------------------------------------------------------------------
 // 	set fixed parameters
@@ -282,25 +257,8 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.Nwrite= 10; 						// number of components to be written to otput
 
 	// correlation between feedback weights of target and interference signal
-	//~ para.rho_Wfb.ones(para.Ncomp_intf+1,para.Ncomp_intf+1);
 	para.rho_Wfb.ones(2*para.Ncomp+(para.Ncomp_intf-para.Ncomp),2*para.Ncomp+(para.Ncomp_intf-para.Ncomp));
 
-	//~ para.rho_Wfb={ 	{1, 1, 1}, 				// 3x3 	for N_intf=2
-					//~ {1, 1, 1},
-					//~ {1, 1, 1} };
-
-	//~ para.rho_Wfb={ 	{1, 1, 1, 1}, 			// 4x4	for N_intf=3
-					//~ {1, 1, 1, 1},
-					//~ {1, 1, 1, 1},
-					//~ {1, 1, 1, 1} };
-
-	//~ para.rho_Wfb={ 	{1, 1, 1, 1, 1}, 		// 5x5	for N_intf=4
-					//~ {1, 1, 1, 1, 1},
-					//~ {1, 1, 1, 1, 1},
-					//~ {1, 1, 1, 1, 1},
-					//~ {1, 1, 1, 1, 1} };
-	//~ para.rho_Wfb12=0.5;
-	//~ para.rho_Wfb12=para.rho_Wfb(0,2);
 	if(para.Ncomp==1){
 		if(para.Ncomp_intf>1){
 			para.rho_Wfb(0,2)=para.rho_Wfb12;
@@ -372,9 +330,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 
 	para.tol_GCgain=6;		// standard deviations above which GC gain is considered too large
 
-	para.cutoff=5;			// cutoff frequency in multiples of fundamental frequency for lowpass Butterworth filter
-	para.norder=4;			// filter order for lowpass Butterworth filter (must be even number)
-
 	para.sqNsyn=sqrt(para.Nsyn);
 
 //------------------------------------------------------------------------
@@ -396,7 +351,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
     else if (para.learnmode == "scan_Tlearn") 	para.learnflag=110;
     else if (para.learnmode == "scan_g") 		para.learnflag=113;
     else if (para.learnmode == "scan_eta") 		para.learnflag=114;
-    else if (para.learnmode == "scan_Ngc_act") 	para.learnflag=117;
     else if (para.learnmode == "scan_Phi") 		para.learnflag=118;
     else if (para.learnmode == "scan_Ampmod") 	para.learnflag=119;
     else if (para.learnmode == "scan_sigmaLS") 	para.learnflag=120;
@@ -406,39 +360,8 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
     else if (para.learnmode == "scan_sigAmp_intf") para.learnflag=129;
     else if (para.learnmode == "scan_gain") 	para.learnflag=131;
     else if (para.learnmode == "scan_rho_Wfb13") 	para.learnflag=132;
-    else if (para.learnmode == "scan_RNNthreshold") para.learnflag=133;
     else if (para.learnmode == "scan_GCgainmax") para.learnflag=134;
     else {std::cerr <<"Bad learnmode string. \n";exit(EXIT_FAILURE);}
-
-    if 		(para.learnmode2 == "cortex") 		para.learnflag2=1;
-    else if (para.learnmode2 == "cerebellum") 	para.learnflag2=2;
-    else if (para.learnmode2 == "none") 		para.learnflag2=0;
-    else if (para.learnmode2 == "repeat") 		para.learnflag2=99;
-    else if (para.learnmode2 == "scan_sigmaN") 	para.learnflag2=100;
-    else if (para.learnmode2 == "scan_threshold") para.learnflag2=101;
-    else if (para.learnmode2 == "scan_Nctx") 	para.learnflag2=102;
-    else if (para.learnmode2 == "scan_Ngc") 	para.learnflag2=103;
-    else if (para.learnmode2 == "scan_sigmaNgc") para.learnflag2=105;
-    else if (para.learnmode2 == "scan_Wgoc") 	para.learnflag2=106;
-    else if (para.learnmode2 == "scan_Ncomp") 	para.learnflag2=107;
-    else if (para.learnmode2 == "scan_sigAmp") 	para.learnflag2=108;
-    else if (para.learnmode2 == "scan_lambda") 	para.learnflag2=109;
-    else if (para.learnmode2 == "scan_Tlearn") 	para.learnflag2=110;
-    else if (para.learnmode2 == "scan_g") 		para.learnflag2=113;
-    else if (para.learnmode2 == "scan_eta") 	para.learnflag2=114;
-    else if (para.learnmode2 == "scan_Ngc_act") para.learnflag2=117;
-    else if (para.learnmode2 == "scan_Phi") 	para.learnflag2=118;
-    else if (para.learnmode2 == "scan_Ampmod") 	para.learnflag2=119;
-    else if (para.learnmode2 == "scan_sigmaLS") para.learnflag2=120;
-    else if (para.learnmode2 == "scan_fcoding") para.learnflag2=123;
-    else if (para.learnmode2 == "scan_sp_alpha") para.learnflag2=124;
-    else if (para.learnmode2 == "scan_rho_Wfb12") para.learnflag2=128;
-    else if (para.learnmode2 == "scan_sigAmp_intf") para.learnflag2=129;
-    else if (para.learnmode2 == "scan_gain") 	para.learnflag2=131;
-    else if (para.learnmode2 == "scan_rho_Wfb13") 	para.learnflag2=132;
-    else if (para.learnmode2 == "scan_RNNthreshold") para.learnflag2=133;
-    else if (para.learnmode2 == "scan_GCgainmax") 	para.learnflag2=134;
-    else {std::cerr <<"Bad learnmode2 string. \n";exit(EXIT_FAILURE);}
 
     if 		(para.signaltype == "quadruple_sine") 	para.signalflag=0;
     else if (para.signaltype == "sine") 			para.signalflag=22;
@@ -450,7 +373,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	if 		(para.noisescaling == "none") 			para.noiseflag=-1;
     else if (para.noisescaling == "constant") 		para.noiseflag=0;
     else if (para.noisescaling == "proportional") 	para.noiseflag=1;
-    //~ else if (para.noisescaling == "rate") 			para.noiseflag=2;
     else {std::cerr <<"Bad noisescaling string. \n";exit(EXIT_FAILURE);}
 
 	if 		(para.learningrule == "RLS") 	para.LRflag=0;
@@ -494,13 +416,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
     if (para.MF_GC_connect == "mixing") 		para.simplemapflag=0;
     else if (para.MF_GC_connect == "simple") 	para.simplemapflag=1;
 	else {std::cerr <<"Bad MF_GC_connect string. \n";exit(EXIT_FAILURE);}
-
-    if (para.GCfilter == "OFF") 		para.filterflag=0;
-    else if (para.GCfilter == "low") 	para.filterflag=1;
-    else if (para.GCfilter == "high") 	para.filterflag=2;
-    else if (para.GCfilter == "band") 	para.filterflag=3;
-    else if (para.GCfilter == "stop") 	para.filterflag=4;
-	else {std::cerr <<"Bad GCfilter string. \n";exit(EXIT_FAILURE);}
 
 	if (para.GoC_mode== "OFF") 						para.gocmodeflag=0;
     else if (para.GoC_mode == "ON") 				para.gocmodeflag=1;
@@ -560,7 +475,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			std::cerr << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		//~ para.fcodingmode="ON";
 	}
 	if(para.learnflag==118){
 		// if target signal is neither combination of sines nor cosines set to cosine default
@@ -577,15 +491,14 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			para.LRflag=2;
 		}
 	}
-	if(para.learnflag==123 || para.learnflag2==123){
+	if(para.learnflag==123){
 		if(para.fcodingflag==0){
 			std::cerr << "Learn- and fcoding-modes incompatible." << std::endl;
 			std::cerr << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		//~ para.fcodingmode="ON";
 	}
-	if(para.learnflag==124 || para.learnflag2==124){
+	if(para.learnflag==124){
 		para.actfuncflag_GC=1;
 	}
 	if(para.gocmodeflag==0){
@@ -593,7 +506,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 		para.Wgoc_SD=0;
 	}
 
-	if( (para.learnflag==128 || para.learnflag2==128 || para.learnflag==129 || para.learnflag2==129) && para.intrfflag==0 ){
+	if( (para.learnflag==128 || para.learnflag==129) && para.intrfflag==0 ){
 		std::cerr << "Learn- and interference-modes incompatible." << std::endl;
 		std::cerr << std::endl;
 		exit(EXIT_FAILURE);
@@ -611,15 +524,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 		std::cerr << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	//~ if(para.gainflag==4){
-		//~ para.actfuncflag_GC=2;
-		//~ para.activation_function_GC = "linear";
-		//~ para.actfuncflag=1;
-		//~ para.activation_function = "linear";
-		// para.Ncomp=1;
-		//~ para.signaltype="cosine_fixed";
-		//~ para.signalflag=23;
-	//~ }
 
 	// check for incompatible interference signal parameters
 	if(para.intrfflag>0 && !(para.signalflag==22 || para.signalflag==23 || para.signalflag==24 || para.signalflag==25) ){
@@ -653,11 +557,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	}
 	if(para.LRflag>=2)	para.loop_learning_flag=0;		// flag is only for output
 	else 				para.loop_learning_flag=1;
-	//~ if(para.actfuncflag_GC==2){
-		//~ para.gainflag=3;
-		//~ para.gainmode = "fixed";
-	//~ }
-	para.multiflag=0;
 
 //------------------------------------------------------------------------
 // 	write flags to file
@@ -668,7 +567,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	json_flags["actfuncflag_GC"] = para.actfuncflag_GC;
 	json_flags["cortexonlyflag"] = para.cortexonlyflag;
 	json_flags["fcodingflag"] = para.fcodingflag;
-	json_flags["filterflag"] = para.filterflag;
 	json_flags["floquetflag"] = para.floquetflag;
 	json_flags["floquetmodeflag"] = para.floquetmodeflag;
 	json_flags["FMdyncleanflag"] = para.FMdyncleanflag;
@@ -678,9 +576,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	json_flags["loopflag"] = para.loop_learning_flag;
 	json_flags["loopflag_test"] = para.loop_test_flag;
 	json_flags["learnflag"] = para.learnflag;
-	json_flags["learnflag2"] = para.learnflag2;
 	json_flags["LRflag"] = para.LRflag;
-	json_flags["multiflag"] = para.multiflag;
 	json_flags["noiseflag"] = para.noiseflag;
 	json_flags["signalflag"] = para.signalflag;
 	json_flags["simplemapflag"] = para.simplemapflag;
@@ -768,29 +664,8 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	else if(para.gocmodeflag==2)	std::cout << "Adding heterogeneous GoC feedback with Wgoc_avrg = " << para.Wgoc << " and Wgoc_std = " << para.Wgoc_SD <<std::endl;
 	else if(para.gocmodeflag==3)	std::cout << "Adding FF GoC inhibition based on MF SD with Wgoc = " << para.Wgoc <<std::endl;
 
-	if(para.filterflag==0){	}
-	else if (para.filterflag==1) {
-		std::cout << "Applying lowpass filter to GCs of order " << para.norder << " with cutoff frequency = "<< para.cutoff << "xfundamental frequency." << std::endl;
-		std::cout << std::endl;
-	}
-	else if (para.filterflag==2){
-		std::cout << "NOT IMPLEMENTED YET." <<std::endl;
-		std::cout << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (para.filterflag==3){
-		std::cout << "NOT IMPLEMENTED YET." <<std::endl;
-		std::cout << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	else if (para.filterflag==4){
-		std::cout << "NOT IMPLEMENTED YET." <<std::endl;
-		std::cout << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
 	std::cout <<"----------------------------------------------------------------" << std::endl;
-	std::cout << "target signal: " << para.signaltype <<  " with Ncomp = " << para.Ncomp << ", lambda = "<< para.lambda <<  ", nf = "<< para.nf << " and "<< std::endl;
+	std::cout << "target signal: " << para.signaltype <<  " with Ncomp = " << para.Ncomp << ", lambda = "<< para.lambda << " and "<< std::endl;
 	std::cout <<"Amp = " << arma::trans(para.amps.rows(0, para.Ncomp-1));
 	std::cout <<"Phi = " << arma::trans(para.phases.rows(0, para.Ncomp-1)) << std::endl;
 	if(para.intrfflag>0){

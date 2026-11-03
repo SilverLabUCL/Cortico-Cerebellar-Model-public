@@ -7,25 +7,21 @@ void write_parameters(nlohmann::json &json_parameters, netpara &para) {
 		for(int k= 0; k <= j; k++) {
 			rho_Wfb_vec(i)=para.rho_Wfb(j,k);
 			i++;
-			//~ std::cout << "\t"<< j<< "\t"<< k << "\t"<< para.rho_Wfb(j,k) << "\t" << nn << std::endl;
 		}
 	}
 
 	json_parameters["Ncx"].push_back(para.Ncx);
 	json_parameters["Nmf"].push_back(para.Nmf);
 	json_parameters["Ngc"].push_back(para.Ngc);
-	json_parameters["Ngc_act"].push_back(para.Ngc_act_out);
 	json_parameters["Nsyn"].push_back(para.Nsyn);
 	json_parameters["Ncomp"].push_back(para.Ncomp);
 	json_parameters["Ncomp_intf"].push_back(para.Ncomp_intf);
 	json_parameters["Ncomp_noise"].push_back(para.Ncomp_noise);
 	json_parameters["Ncomp_noise_RNN"].push_back(para.Ncomp_noise_RNN);
 	json_parameters["FCcomp_tol"].push_back(para.FCcomp_tol);
-	json_parameters["nf"].push_back(para.nf);
 	json_parameters["Nreal"].push_back(para.Nreal);
 	json_parameters["N_FMperiods"].push_back(para.N_FMperiods);
 	json_parameters["Npara"].push_back(para.Npara);
-	json_parameters["Npara2"].push_back(para.Npara2);
 	json_parameters["RNseed"].push_back(para.seed);
 	json_parameters["Ampmod"].push_back(para.ampmod);
 	json_parameters["alpha"].push_back(para.alpha);
@@ -38,7 +34,6 @@ void write_parameters(nlohmann::json &json_parameters, netpara &para) {
 	json_parameters["dt"].push_back(para.dt);
 	json_parameters["dt_euler"].push_back(para.dt_euler);
 	json_parameters["delta_eta"].push_back(para.delta_eta);
-	json_parameters["delta_eps_decay"].push_back(para.delta_eps_decay);
 	json_parameters["delta_r2_reg"].push_back(para.delta_r2_reg);
 	json_parameters["FACsigmaLS_ctx"].push_back(para.FACsigmaLS_ctx);
 	json_parameters["FACsigmaLS_gc"].push_back(para.FACsigmaLS_gc);
@@ -54,7 +49,6 @@ void write_parameters(nlohmann::json &json_parameters, netpara &para) {
 	json_parameters["INT_delta_abs"].push_back(para.INT_delta_abs);
 	json_parameters["INT_delta_rel"].push_back(para.INT_delta_rel);
 	json_parameters["lambda"].push_back(para.lambda);
-	json_parameters["outlier_thresh"].push_back(para.outlier_thresh);
 	json_parameters["pcon"].push_back(para.pcon);
 	json_parameters["phases"].push_back(para.phases);
 	json_parameters["phases_intf"].push_back(para.phases_intf);

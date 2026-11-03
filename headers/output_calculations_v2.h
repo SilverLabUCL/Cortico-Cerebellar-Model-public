@@ -8,23 +8,6 @@ double output_rate(arma::vec& WOUT, arma::colvec& INPUT) {
 	return OUTPUT;
 }
 ////////////////////////////////////////////////////////////////////////////////
-//~ double calc_corr(arma::mat& RATE) {
-	//~ //	*************************
-	//~ double avrgcorr;
-
-	//~ // calculate correlation matrix and vectorise
-	//~ arma::vec C=arma::vectorise(arma::cor(RATE.t()));
-
-	//~ // remove NaN entries (due to zero neurons)
-	//~ arma::uvec nanidx=find_nonfinite(C);
-	//~ C.shed_rows(nanidx);
-	// std::cout  << C.n_rows << "\t" << C.n_cols << std::endl;
-	//~ // return average correlation
-	//~ if(C.n_rows==0)		avrgcorr=NAN;
-	//~ else  				avrgcorr=arma::mean(arma::abs(C));
-	//~ return avrgcorr;
-//~ }
-////////////////////////////////////////////////////////////////////////////////
 double calc_dim(arma::mat& RATE, std::vector<double>& lambdaT, int SVD_tsteps) {
 	//	*************************
 	// calculate dimensionality
@@ -87,7 +70,6 @@ double calc_dim_noEV(arma::mat& RATE, int SVD_tsteps) {
 	// compute singular values
 	arma::vec ST;
 	bool success = arma::svd(ST,RATE);
-	//~ std::cout << Nlamb <<"\t" << ST.n_rows <<"\t" << ST.n_cols << std::endl;
 	if(success) {
 		// compute eigenvalues
 		double lambdaT[Nlamb];

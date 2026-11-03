@@ -63,9 +63,5 @@ void update_rates(double t, const double X[], netpara &para) {
 		}
 	}
 
-	// GC filtering
-	if(para.filterflag>0)	para.nuGC=filter_GCs(para.nuGC, para);
-
-
 	return;
 }

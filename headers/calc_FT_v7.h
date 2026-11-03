@@ -84,10 +84,6 @@ void FTcomponents(FTcomp &Cmp, arma::mat &RATE, arma::vec &cleantol,netpara &par
 		freqaxis(i) = i*fs/double(FT_tsteps);		// fs/double(FT_tsteps) is the frequency step
 	}
 
-	//~ std::cout << "# of time steps FT: " << FT_tsteps <<"\t maximum frequency: " << fs <<"\t \t base frequency: " << w <<"\t \t frequency step: " << fs/double(FT_tsteps) << std::endl;
-	//~ std::cout << "number of components: " << Ncomp_total << "\t maximum searched frequency: " << Ncomp_total*w << std::endl;
-	//~ std::cout << "freqaxis: " << freqaxis(0) <<"\t" << freqaxis(1) <<"\t" << freqaxis(2) <<"\t" << freqaxis(3) << std::endl;
-
 	arma::mat pks_real(N,1);
 	arma::mat pks_imag(N,1);
 
@@ -178,7 +174,7 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 		// linear RNN without artificial overtones
 		if(para.actfuncflag==1 && para.intrfflag==0)		Ncomp_noise=0;
 		// linear RNN with artificial overtones
-		else if(para.actfuncflag==1 && para.intrfflag==1)	Ncomp_noise=para.nf*(para.Ncomp_intf-1);
+		else if(para.actfuncflag==1 && para.intrfflag==1)	Ncomp_noise=(para.Ncomp_intf-1);
 		// non-linear tanh RNN
 		//~ else if(para.actfuncflag==0)	Ncomp_noise=6;
 		else if(para.actfuncflag==0)	Ncomp_noise=para.Ncomp_noise_RNN;
@@ -220,7 +216,6 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 		Cmp_noise.bn=arma::zeros<arma::mat>(N,Ncomp_total);
 		arma::mat TMP=arma::zeros<arma::mat>(arma::size(RATE));
 		TMP.randn(arma::size(RATE));
-		 //~ std::cout << arma::stddev(arma::vectorise(TMP*para.sigmaLS)) << std::endl;
 		arma::mat NOISE=RATE+TMP*para.sigmaLS;//*para.FACsigmaLS_ctx; // ADJUST THIS
 
 		writeflag=1; cleanflag=0;
@@ -236,29 +231,10 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 
 	//	*************************
 	// clean up fourier components
-	//~ double tol=1e-4;
 	double tol=para.FCcomp_tol;
 	Cmp.a0.clean( tol);
 	Cmp.an.clean( tol);
 	Cmp.bn.clean( tol);
-	// set spanning vectors to zero if norm negligible
-	//~ double tol2=1e-5;
-	//~ double tol2=5e-4;
-	//~ double tol2=1e-3;
-	//~ double tol2=1e-12;
-	//~ double na1=arma::norm(Cmp.an.col(0));
-	// double nb1=arma::norm(Cmp.bn.col(0));
-	//~ for (int i = 0; i < Ncomp_total; i++) {
-		//~ if( arma::norm(Cmp.an.col(i))/na1 <tol2 ) {//|| arma::norm(Cmp.an.col(i)) < para.sigmaLS || arma::norm(Cmp.an.col(i)) < para.sigmaN){
-			//~ Cmp.an.col(i)=arma::zeros(arma::size(Cmp.an.col(i)));
-			//~ std::cout << "a_"<< i << std::endl;
-		//~ }
-		//~ // if( arma::norm(Cmp.bn.col(i))/nb1 <tol2){
-		//~ if( arma::norm(Cmp.bn.col(i))/na1 <tol2 ) {//|| arma::norm(Cmp.bn.col(i)) < para.sigmaLS || arma::norm(Cmp.an.col(i)) < para.sigmaN){
-			//~ Cmp.bn.col(i)=arma::zeros(arma::size(Cmp.bn.col(i)));
-			//~ std::cout << "b_"<< i << std::endl;
-		//~ }
-	//~ }
 
 	//	*************************
 	// assemble signal and noise subspaces
@@ -297,10 +273,6 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 	center_vectors(Cmp.S_signal,Cmp.S_signal_centered);
 	center_vectors(Cmp.S_noise,Cmp.S_noise_centered);
 	center_vectors(Cmp.S_noise_noa0,Cmp.S_noise_noa0_centered);
-	//~ Cmp.S_total_centered=Cmp.S_total;
-	//~ Cmp.S_signal_centered=Cmp.S_signal;
-	//~ Cmp.S_noise_centered=Cmp.S_noise;
-	//~ Cmp.S_noise_noa0_centered=Cmp.S_noise_noa0;
 
 	int Ms=Cmp.S_signal.n_cols;
 	int Mn=Cmp.S_noise.n_cols;
@@ -337,27 +309,18 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 	// compute dimensionality from Fourier components
 	// 'signal' dimensionality
 	Cmp.dim_signal = calc_FT_dim(Cmp.S_signal_centered);
-	//~ Cmp.dim_signal = calc_FT_dim(S_signal_cos);
 
 	//	*************************
 	// compute condition number from Fourier components
-	//~ Cmp.cond_signal = calc_FT_cond(Cmp.S_signal_centered, 1e-3);
 	Cmp.cond_signal = calc_FT_cond(S_signal_cos, 1e-3);
-
-	//	*************************
-	// compute pairwise dimensionality and pairwise condition number of signal cos/sin components
-	Cmp.dim_signal_pw=arma::zeros<arma::vec>(Ncomp);
-	for (int i = 0; i < Ncomp; i++) {
-		int j=2*i;
-		arma::mat join_sig=arma::join_horiz(Cmp.S_signal_centered.col(j), Cmp.S_signal_centered.col(j+1));
-		Cmp.dim_signal_pw.at(i,j)=calc_FT_dim(join_sig);
-	}
 
 	if (modeflag == "cereb"){
 		int maxindex=std::min(1, Ncomp_noise);
 		arma::mat condtmp=arma::join_horiz(Cmp.S_signal_centered, Cmp.S_noise_noa0_centered.cols(0,maxindex-1));
-		//~ arma::mat condtmp=arma::join_horiz(Cmp.S_signal_centered, Cmp.S_noise_noa0_centered.cols(0,Ncomp_noise-1));
 		Cmp.cond_total=calc_FT_cond(condtmp,1e-3);
+	}
+	else if (modeflag == "ctx" && para.actfuncflag==1 && para.intrfflag==0){
+		Cmp.cond_total=calc_FT_cond(Cmp.S_signal_centered,1e-3);
 	}
 	else Cmp.cond_total=NAN;
 	//~ Cmp.cond_total=NAN;
@@ -365,7 +328,6 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 	//	*************************
 	// subspace angles between cos-part of signal-subspace and the rest
 	double threshold=sqrt(2)/2;
-	//~ Cmp.subangles=arma::zeros<arma::vec>(std::min(Ms/2,Mn));
 	Cmp.subangles=arma::zeros<arma::vec>(Ncomp);
 
 	// scale columns
@@ -417,7 +379,6 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 
 	// calculate sine product of signal angles
 	calc_FT_angles(Cmp.Angles_signal, S_signal_cos);
-	//~ std::cout << arma::nonzeros(arma::trimatu(Cmp.Angles_signal)) << std::endl;
 	Cmp.sineprod_signal=arma::prod(arma::sin(arma::nonzeros(arma::trimatu(Cmp.Angles_signal))*M_PI/180.0));
 
 	return;

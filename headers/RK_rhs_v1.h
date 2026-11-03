@@ -116,9 +116,6 @@ int RK_cortex_cereb_rhs(double t, const double hcx[], double dhcx_dt[], void *pa
 		}
 	}
 
-	// GC filtering
-	if(para.filterflag>0)	nuGC=filter_GCs(nuGC, para);
-
 	//	RNN feedback input
 	if(para.closedloop==0){
 		// open loop: drive network with target signal
@@ -226,9 +223,6 @@ int RK_cortex_cereb_dyn_rhs(double t, const double X[], double dX_dt[], void *pa
 			for (int j=0; j<para.Ncomp_intf; j++)	nuGC[i]=nuGC[i]+input_intf[j]*para.Intf_weights.at(i,j);
 		}
 	}
-
-	// GC filtering
-	if(para.filterflag>0)	nuGC=filter_GCs(nuGC, para);
 
 	//	RNN feedback input
 	if(para.closedloop==0){

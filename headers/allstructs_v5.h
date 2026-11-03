@@ -40,12 +40,12 @@ struct filter {
 };
 
 struct netpara {
-	int Ncx,Ngc,Nmf,Nsyn,Ncomp,Ncomp_noise,Ncomp_noise_RNN,Ncomp_intf,Nwrite,Ngc_act,Npara,Npara2,N_FMperiods,Nreal,Nrep,seed,nf;
+	int Ncx,Ngc,Nmf,Nsyn,Ncomp,Ncomp_noise,Ncomp_noise_RNN,Ncomp_intf,Nwrite,Npara,N_FMperiods,Nreal,Nrep,seed;
 	int Tmax_learn,Tmax_test,Tmax_test_euler,Tmax_FT,Tmax_trans,Tmax_FM,Tmax_Fadj;
 	int algswitch,norder,RLSlearn_every,write_every,closedloop;
 
-	double sigmaN,sigmaNgc,sqNsyn,alpha,Wgoc,Wgoc_SD,pcon,g,sigmaLS,FACsigmaLS_ctx,FACsigmaLS_gc,tol_GCgain,GCgainmax,GCmax,Ngc_act_out;
-	double sqt,delta_eta,delta_eps_decay,tau,delta_r2_reg,tau_avrg,tau_std,tauRNNcutoff,tauGC_avrg,tauGC_std,tauGCcutoff,dt,dt_euler,DT,DT_euler,ftarget,GCsig_target,GCavrg_target,GCgain,GCthreshold,GCgain_base,GCthreshold_base,fc_avrg,fc_SD,rho_Wfb12,rho_Wfb13,openloop_test_noise,outlier_thresh;
+	double sigmaN,sigmaNgc,sqNsyn,alpha,Wgoc,Wgoc_SD,pcon,g,sigmaLS,FACsigmaLS_ctx,FACsigmaLS_gc,tol_GCgain,GCgainmax,GCmax;
+	double sqt,delta_eta,tau,delta_r2_reg,tau_avrg,tau_std,tauRNNcutoff,tauGC_avrg,tauGC_std,tauGCcutoff,dt,dt_euler,DT,DT_euler,ftarget,GCsig_target,GCavrg_target,GCgain,GCthreshold,GCgain_base,GCthreshold_base,fc_avrg,fc_SD,rho_Wfb12,rho_Wfb13;
 	double sigAmp,sigAmp_intf,lambda,phi1,ampmod,JI_ctx,JI_cereb,cutoff,sp_alpha,FCcomp_tol;
 	double Z,PC;
 
@@ -53,11 +53,11 @@ struct netpara {
 	double INT_delta_abs,INT_delta_rel;
 
 	// flags
-	int actfuncflag,actfuncflag_GC,fcodingflag,filterflag,floquetflag,floquetmodeflag,FMdyncleanflag,gainflag,gocmodeflag,intrfflag,learnflag,learnflag2,loop_learning_flag,loop_test_flag,LRflag,multiflag,noiseflag,RKflag,ROwriteflag,signalflag,simplemapflag,taudistrbflag,taugcmodeflag,testphaseflag;
+	int actfuncflag,actfuncflag_GC,fcodingflag,floquetflag,floquetmodeflag,FMdyncleanflag,gainflag,gocmodeflag,intrfflag,learnflag,loop_learning_flag,loop_test_flag,LRflag,noiseflag,RKflag,ROwriteflag,signalflag,simplemapflag,taudistrbflag,taugcmodeflag,testphaseflag;
 	int cortexonlyflag;
 
 	// strings
-	std::string activation_function,activation_function_GC,fcodingmode,floquet,floquetmode,FMdynclean,gainmode,GCfilter,GoC_mode,interference_signal,learningrule,learnmode,learnmode2,loop_test,MF_GC_connect,noisescaling,path,path2D,path_connect,ROwrite,signaltype,tau_mode,taugc_mode;
+	std::string activation_function,activation_function_GC,fcodingmode,floquet,floquetmode,FMdynclean,gainmode,GoC_mode,interference_signal,learningrule,learnmode,loop_test,MF_GC_connect,noisescaling,path,path_connect,ROwrite,signaltype,tau_mode,taugc_mode;
 	std::string folder,version;
 
 	//arrays
@@ -134,8 +134,6 @@ struct netpara {
 	arma::vec trans;
 	arma::vec FM;
 
-	// filter struct
-	struct filter butter;
 };
 
 struct FTcomp {
@@ -162,7 +160,6 @@ struct FTcomp {
 	arma::vec nn_noise;
 	arma::vec nn_total;
 
-	arma::vec dim_signal_pw;
 	arma::vec subangles;
 
 	double dim_signal;

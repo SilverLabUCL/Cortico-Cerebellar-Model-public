@@ -9,7 +9,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.lambda=5;				// signal fundamental frequency
 	para.Ncomp=1;				// number of components of combined sine/cosine signal
 	para.Ncomp_intf=2;			// number of components of interference signal
-	para.nf=1;					// spacing between frequency components (nf=1: every overtones, nf=2: every second overtone, etc.)
 	para.g=0.9;
 	para.seed=-1;				// default random number seeds
 	para.Nreal=10;				// number of network realisations
@@ -22,10 +21,8 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.rho_Wfb12=1;			//
 	para.rho_Wfb13=1;			//
 	para.write_every=20;		// read out every nth time step
-	para.outlier_thresh=1.1;    // factor determining outlier detection threshold
 
 	para.delta_eta=0.0025;		// initial learning rate for DELTA rule
-	para.delta_eps_decay=1e-5;	// weight decay parameter for DELTA rule
 	para.delta_r2_reg=1e-6;		// norm regularisation for DELTA rule
 
 	para.INT_delta_abs=1e-3;	// integrator absolute error
@@ -47,8 +44,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.noisescaling="none";
 	// learn mode: 'cortex', 'none', 'repeat' or 'scan_...'
 	para.learnmode="cortex";
-	// learn mode: 'scan_...'
-	para.learnmode2="scan_lambda";
 	// learning rule: 'RLS', 'LS', 'RR', 'PINV' or 'DELTA'
 	para.learningrule="LS";
 	// testphase in 'closed' or 'open' loop or with open loop with noise exclusively: 'open noise'
@@ -74,7 +69,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			("help", "produce help message")
 			("signaltype", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.signaltype), "target signal: 'quadruple_sine', 'accordion', 'cosine_fixed'... ")
 			("learnmode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learnmode), "learn mode: 'cortex', 'none', 'repeat' or 'scan_...' ")
-			("learnmode2", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learnmode2), "learn mode: 'scan_...' ")
 			("LRule", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learningrule), "learning rule: 'RLS', 'LS', 'RR', 'PINV' or 'DELTA' ")
 			("noise", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.noisescaling), "noise (scaling with firing rate): 'constant', 'proportional' or 'none' ")
 			("loop_test", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.loop_test), "loop type during test-phase: 'closed' or 'open'")
@@ -88,7 +82,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			("Ncx", po::value<int>(&para.Ncx)->default_value(para.Ncx), "number of RNN units")
 			("Ncomp", po::value<int>(&para.Ncomp)->default_value(para.Ncomp), "number of signal frequency components")
 			("Ncomp_intf", po::value<int>(&para.Ncomp_intf)->default_value(para.Ncomp_intf), "number of interference signal frequency components")
-			("nf", po::value<int>(&para.nf)->default_value(para.nf), "spacing between frequency components")
 			("g", po::value<double>(&para.g)->default_value(para.g), "reccurent weight parameter")
 			("lambda", po::value<double>(&para.lambda)->default_value(para.lambda), "signal fundamental frequency")
 			("T_learn", po::value<double>(&para.duration_learn)->default_value(para.duration_learn), "length of learning phase (i.e. number of periods)")
@@ -106,7 +99,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			("write_every", po::value<int>(&para.write_every)->default_value(para.write_every), "read-out sampling rate (every xth time-step)")
 			("dt", po::value<double>(&para.DT)->default_value(para.DT), "integration time step")
 			("dt_euler", po::value<double>(&para.DT_euler)->default_value(para.DT_euler), "integration time step of euler test-phase")
-			("outlier_threshold", po::value<double>(&para.outlier_thresh)->default_value(para.outlier_thresh), "factor determining outlier detection threshold")
 			("delta_eta", po::value<double>(&para.delta_eta)->default_value(para.delta_eta), "initial learning rate for DELTA rule")
 			("INT_delta_abs", po::value<double>(&para.INT_delta_abs)->default_value(para.INT_delta_abs), "target absolute error for numerical integration")
 			("INT_delta_rel", po::value<double>(&para.INT_delta_rel)->default_value(para.INT_delta_rel), "target relative error for numerical integration")
@@ -129,10 +121,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 		if (vm["learnmode"].defaulted()==0)  {
 			tmp=vm["learnmode"].as< std::vector<std::string> >();
 			para.learnmode= tmp[0];
-		}
-		if (vm["learnmode2"].defaulted()==0)  {
-			tmp=vm["learnmode2"].as< std::vector<std::string> >();
-			para.learnmode2= tmp[0];
 		}
 		if (vm["LRule"].defaulted()==0)  {
 			tmp=vm["LRule"].as< std::vector<std::string> >();
@@ -187,21 +175,15 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.MF_GC_connect="simple";
 	para.fcodingmode="global";
 	para.gainmode="fixed";
-	para.learnmode2="cortex";
-	para.Npara2=1;
 	para.activation_function_GC="relu";
 	para.cortexonlyflag=1;
 	para.Ngc=2;
 
 	para.fcodingflag=0;
-	para.filterflag=0;
 
 	// target folders
-	para.path="sim/";
-	para.path2D="sim2D/";
+	para.path="simulation_results/";
 	para.path_connect="connectivity/";
-	//~ para.path="sim2/";
-	//~ para.path_connect="connectivity2/";
 
 //------------------------------------------------------------------------
 // 	set fixed parameters
@@ -287,28 +269,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
     else if (para.learnmode == "scan_rho_Wfb12") 	para.learnflag=128;
     else if (para.learnmode == "scan_sigAmp_intf") para.learnflag=129;
     else if (para.learnmode == "scan_rho_Wfb13") 	para.learnflag=132;
-    else if (para.learnmode == "scan_RNNthreshold") para.learnflag=133;
     else {std::cerr <<"Bad learnmode string. \n";exit(EXIT_FAILURE);}
-
-    if 		(para.learnmode2 == "cortex") 		para.learnflag2=1;
-    else if (para.learnmode2 == "none") 		para.learnflag2=0;
-    else if (para.learnmode2 == "repeat") 		para.learnflag2=99;
-    else if (para.learnmode2 == "scan_sigmaN") 	para.learnflag2=100;
-    else if (para.learnmode2 == "scan_Nctx") 	para.learnflag2=102;
-    else if (para.learnmode2 == "scan_Ncomp") 	para.learnflag2=107;
-    else if (para.learnmode2 == "scan_sigAmp") 	para.learnflag2=108;
-    else if (para.learnmode2 == "scan_lambda") 	para.learnflag2=109;
-    else if (para.learnmode2 == "scan_Tlearn") 	para.learnflag2=110;
-    else if (para.learnmode2 == "scan_g") 		para.learnflag2=113;
-    else if (para.learnmode2 == "scan_eta") 	para.learnflag2=114;
-    else if (para.learnmode2 == "scan_Phi") 	para.learnflag2=118;
-    else if (para.learnmode2 == "scan_Ampmod") 	para.learnflag2=119;
-    else if (para.learnmode2 == "scan_sigmaLS") para.learnflag2=120;
-    else if (para.learnmode2 == "scan_rho_Wfb12") para.learnflag2=128;
-    else if (para.learnmode2 == "scan_sigAmp_intf") para.learnflag2=129;
-    else if (para.learnmode2 == "scan_rho_Wfb13") 	para.learnflag2=132;
-    else if (para.learnmode2 == "scan_RNNthreshold") para.learnflag2=133;
-    else {std::cerr <<"Bad learnmode2 string. \n";exit(EXIT_FAILURE);}
 
     if 		(para.signaltype == "quadruple_sine") 	para.signalflag=0;
     else if (para.signaltype == "sine") 			para.signalflag=22;
@@ -391,12 +352,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 		}
 	}
 
-	//~ if( (para.learnflag==128 || para.learnflag2==128 || para.learnflag==129 || para.learnflag2==129) && para.intrfflag==0 ){
-		//~ std::cerr << "Learn- and interference-modes incompatible." << std::endl;
-		//~ std::cerr << std::endl;
-		//~ exit(EXIT_FAILURE);
-	//~ }
-
 	// check for incompatible interference signal parameters
 	if(para.intrfflag>0 && !(para.signalflag==22 || para.signalflag==23 || para.signalflag==24 || para.signalflag==25) ){
 		std::cerr << "Target signal and interference signal incompatible." << std::endl;
@@ -417,8 +372,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	if(para.LRflag>=2)	para.loop_learning_flag=0;
 	else 				para.loop_learning_flag=1;
 
-	para.multiflag=0;
-
 //------------------------------------------------------------------------
 // 	write flags to file
 //------------------------------------------------------------------------
@@ -428,7 +381,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	json_flags["actfuncflag_GC"] = para.actfuncflag_GC;
 	json_flags["cortexonlyflag"] = para.cortexonlyflag;
 	json_flags["fcodingflag"] = para.fcodingflag;
-	json_flags["filterflag"] = para.filterflag;
 	json_flags["floquetflag"] = para.floquetflag;
 	json_flags["floquetmodeflag"] = para.floquetmodeflag;
 	json_flags["FMdyncleanflag"] = para.FMdyncleanflag;
@@ -437,9 +389,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	json_flags["loopflag"] = para.loop_learning_flag;
 	json_flags["loopflag_test"] = para.loop_test_flag;
 	json_flags["learnflag"] = para.learnflag;
-	json_flags["learnflag2"] = para.learnflag2;
 	json_flags["LRflag"] = para.LRflag;
-	json_flags["multiflag"] = para.multiflag;
 	json_flags["noiseflag"] = para.noiseflag;
 	json_flags["signalflag"] = para.signalflag;
 	json_flags["simplemapflag"] = para.simplemapflag;
@@ -477,7 +427,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	}
 
 	std::cout <<"----------------------------------------------------------------" << std::endl;
-	std::cout << "target signal: " << para.signaltype <<  " with Ncomp = " << para.Ncomp << ", lambda = "<< para.lambda <<  ", nf = "<< para.nf << " and "<< std::endl;
+	std::cout << "target signal: " << para.signaltype <<  " with Ncomp = " << para.Ncomp << ", lambda = "<< para.lambda << " and "<< std::endl;
 	std::cout <<"Amp = " << arma::trans(para.amps.rows(0, para.Ncomp-1));
 	std::cout <<"Phi = " << arma::trans(para.phases.rows(0, para.Ncomp-1)) << std::endl;
 	if(para.intrfflag>0){

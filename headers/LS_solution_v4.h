@@ -32,7 +32,6 @@ void LS_solution(arma::mat RATE, arma::vec &WOUT, double &RMSE_train, arma::uwor
 
 		// compute weights with least-squares
 		learn_success=arma::solve(Wls, RATE.t(), targetrate);
-		//~ learn_success=arma::solve(Wls, RATE.t(), targetrate, arma::solve_opts::fast);
 		if(learn_success==0) {
 			Wls.zeros(N,1);
 		}
@@ -49,7 +48,6 @@ void LS_solution(arma::mat RATE, arma::vec &WOUT, double &RMSE_train, arma::uwor
 
 	// rank of XX^t
 	bool rnk_success = arma::rank(rnk, RATE*RATE.t() );
-	//~ std::cout << "rnk_success = " << rnk_success << std::endl;
 
 	// compute output rate
 	arma::vec outrate=arma::trans( Wls.t() * RATE);
@@ -62,7 +60,6 @@ void LS_solution(arma::mat RATE, arma::vec &WOUT, double &RMSE_train, arma::uwor
 	RMSE_train=sqrt(RMSE_train/double(Nt))/sqrt(para.signalvar);
 
 	// update the output weights
-	//~ WOUT = Wls;
 	WOUT = Wls*N;
 
 	return;
