@@ -4,7 +4,7 @@ function data=read_simulations_release(path_sim,path_connect)
 % path_connect='connectivity/';
 
 %% read json file for flags
-fid=fopen([path_sim '/flags.dat']);
+fid=fopen([path_sim '/flags.json']);
 raw = fread(fid,inf);
 str = char(raw');
 fclose(fid);
@@ -16,7 +16,7 @@ if(CORTEXONLY==1)
 end
 
 %% read json file for parameters
-fid=fopen([path_sim '/parameters.dat']);
+fid=fopen([path_sim '/parameters.json']);
 raw = fread(fid,inf);
 str = char(raw');
 fclose(fid);
@@ -57,19 +57,8 @@ if(flags.learnflag<3)
 
     path_para='parameter_1/';
 
-    % read json file for single trial data
-    fid=fopen([path_sim,path_para 'single_trial.dat']);
-    if(fid>-1)
-        raw = fread(fid,inf);
-        str = char(raw');
-        fclose(fid);
-        data.single_trial=jsondecode(str);
-    else
-        data.single_trial=[];
-    end
-
     % read json file for stats
-    fid=fopen([path_sim,path_para 'stats.dat']);
+    fid=fopen([path_sim,path_para 'stats.json']);
     raw = fread(fid,inf);
     str = char(raw');
     fclose(fid);
@@ -79,7 +68,7 @@ if(flags.learnflag<3)
     data.stats=struct2table(data.stats);
 
     % read json file for targets
-    fid=fopen([path_sim,path_para 'targets.dat']);
+    fid=fopen([path_sim,path_para 'targets.json']);
     raw = fread(fid,inf);
     str = char(raw');
     fclose(fid);
@@ -112,7 +101,7 @@ if(flags.learnflag<3)
     % data.State=checkopen([path_sim,'State.dat']);
 
     % read json file for measures
-    fid=fopen([path_sim,path_para 'measures.dat']);
+    fid=fopen([path_sim,path_para 'measures.json']);
     raw = fread(fid,inf);
     str = char(raw');
     fclose(fid);
@@ -125,44 +114,121 @@ if(flags.learnflag<3)
         data.(fn{k})=tmp;
     end
 
-    data.stotal=checkopen([path_sim,'stotal_RNN.dat']);
-    if(CORTEXONLY==0)
-        data.stotal=checkopen([path_sim,'stotal_FFL.dat']);
+    % % read json file for single trial data
+    % fid=fopen([path_sim,path_para 'single_trial.json']);
+    % if(fid>-1)
+    %     raw = fread(fid,inf);
+    %     str = char(raw');
+    %     fclose(fid);
+    %     data.single_trial=jsondecode(str);
+    % else
+    %     data.single_trial=[];
+    % end
+    %
+    % data.stotal=checkopen([path_sim,'stotal_RNN.dat']);
+    % if(CORTEXONLY==0)
+    %     data.stotal=checkopen([path_sim,'stotal_FFL.dat']);
+    % end
+    %
+    % % weights
+    % Wcx=readmatrix([path_connect,'Wcx.dat']);
+    % Wcx(:,1:2)=Wcx(:,1:2)+1;
+    % data.weights.Wcx=spconvert(Wcx);
+    %
+    % data.weights.Wout_RNN=readmatrix([path_connect,'Wout_RNN.dat'])';
+    % data.weights.Wfb=readmatrix([path_connect,'Wfb.dat']);
+    % if(data.parameters.flags.interferenceflag>0)
+    %     data.weights.Wfb_interf=readmatrix([path_connect,'Wfb_interf.dat']);
+    % end
+    %
+    % if(CORTEXONLY==0)
+    %     data.weights.MFidx=readmatrix([path_connect,'MFidx.dat']);
+    %     data.weights.Wctxmf=spconvert(data.weights.MFidx);
+    %     if size(data.weights.Wctxmf,2) ~= data.parameters.Ncx
+    %         data.weights.Wctxmf(data.parameters.Nmf,data.parameters.Ncx) = 0;
+    %     end
+    %
+    %     Wmf=readmatrix([path_connect,'Wmf.dat']);
+    %     for i=1:length(Wmf)
+    %         Wmf(i,2)=data.weights.MFidx(Wmf(i,2));
+    %     end
+    %     data.weights.Wmf=spconvert(Wmf);
+    %     data.weights.Wout_FFL=readmatrix([path_connect,'Wout_FFL.dat'])';
+    %     data.weights.Wgoc_distrb=data.single_trial.Wgoc_distrb';
+    %
+    %     data.weights.theta=data.single_trial.theta';
+    %     data.weights.gain=data.single_trial.gain';
+    %     data.weights.tauGC_distrb=data.single_trial.tauGC_distrb';
+    % end
+    %
+    % % initial conditions
+    % data.hcx_inistate=data.single_trial.hcx_inistate;
+
+    % Read JSON file for single trial data
+    fid = fopen([path_sim, path_para, 'weights_single_trial.json']);
+
+    if fid > -1
+        raw = fread(fid, inf);
+        str = char(raw');
+        fclose(fid);
+        data.single_trial = jsondecode(str);
+    else
+        data.single_trial = [];
     end
 
-    % weights
-    Wcx=readmatrix([path_connect,'Wcx.dat']);
-    Wcx(:,1:2)=Wcx(:,1:2)+1;
-    data.weights.Wcx=spconvert(Wcx);
-
-    data.weights.Wout_RNN=readmatrix([path_connect,'Wout_RNN.dat'])';
-    data.weights.Wfb=readmatrix([path_connect,'Wfb.dat']);
-    if(data.parameters.flags.interferenceflag>0)
-        data.weights.Wfb_interf=readmatrix([path_connect,'Wfb_interf.dat']);
+    % Read spanning vectors
+    data.stotal = checkopen([path_sim, 'stotal_RNN.dat']);
+    if CORTEXONLY == 0
+        data.stotal = checkopen([path_sim, 'stotal_FFL.dat']);
     end
 
-    if(CORTEXONLY==0)
-        data.weights.MFidx=readmatrix([path_connect,'MFidx.dat']);
-        data.weights.Wctxmf=spconvert(data.weights.MFidx);
+    % Connectivity weights
+    % Wcx
+    Wcx = data.single_trial.Wcx;
+    Wcx(:,1:2) = Wcx(:,1:2) + 1;
+    data.weights.Wcx = spconvert(Wcx);
+
+    % Wout_RNN
+    data.weights.Wout_RNN = data.single_trial.Wout_RNN';
+
+    % Wfb
+    data.weights.Wfb = data.single_trial.Wfb;
+
+    % Wfb_interf
+    if data.parameters.flags.interferenceflag > 0
+        data.weights.Wfb_interf = data.single_trial.Wfb_interf;
+    end
+
+    % FFL connectivity and parameters
+    if CORTEXONLY == 0
+        % MFidx
+        data.weights.MFidx = data.single_trial.MFidx;
+        data.weights.Wctxmf = spconvert(data.weights.MFidx);
         if size(data.weights.Wctxmf,2) ~= data.parameters.Ncx
-            data.weights.Wctxmf(data.parameters.Nmf,data.parameters.Ncx) = 0;
+            data.weights.Wctxmf(data.parameters.Nmf, data.parameters.Ncx) = 0;
         end
 
-        Wmf=readmatrix([path_connect,'Wmf.dat']);
-        for i=1:length(Wmf)
-            Wmf(i,2)=data.weights.MFidx(Wmf(i,2));
+        % Wmf
+        Wmf = data.single_trial.Wmf;
+        for i = 1:size(Wmf,1)
+            Wmf(i,2) = data.weights.MFidx(Wmf(i,2));
         end
-        data.weights.Wmf=spconvert(Wmf);
-        data.weights.Wout_FFL=readmatrix([path_connect,'Wout_FFL.dat'])';
-        data.weights.Wgoc_distrb=data.single_trial.Wgoc_distrb';
+        data.weights.Wmf = spconvert(Wmf);
 
-        data.weights.theta=data.single_trial.theta';
-        data.weights.gain=data.single_trial.gain';
-        data.weights.tauGC_distrb=data.single_trial.tauGC_distrb';
+        % Wout_FFL
+        data.weights.Wout_FFL = data.single_trial.Wout_FFL';
+
+        % Distributions and neuron parameters
+        data.weights.Wgoc_distrb = data.single_trial.Wgoc_distrb';
+        data.weights.theta = data.single_trial.theta';
+        data.weights.gain = data.single_trial.gain';
+        data.weights.tauGC_distrb = data.single_trial.tauGC_distrb';
+
     end
 
-    % initial conditions
-    data.hcx_inistate=data.single_trial.hcx_inistate;
+    % Initial conditions
+    data.hcx_inistate = data.single_trial.hcx_inistate;
+
 
     % clean up
     data = rmfield(data,'measures_raw');
@@ -176,21 +242,21 @@ if(flags.learnflag>=3)
         path_Npara=['parameter_' num2str(j) '/'];
 
         % read json file for measures
-        fid=fopen([path_sim,path_Npara 'measures.dat']);
+        fid=fopen([path_sim,path_Npara 'measures.json']);
         raw = fread(fid,inf);
         str = char(raw');
         fclose(fid);
         data.measures_raw{j,1}=jsondecode(str);
 
         % read json file for stats
-        fid=fopen([path_sim,path_Npara 'stats.dat']);
+        fid=fopen([path_sim,path_Npara 'stats.json']);
         raw = fread(fid,inf);
         str = char(raw');
         fclose(fid);
         data.stats{j,1}=jsondecode(str);
 
         % read json file for targets
-        fid=fopen([path_sim,path_Npara 'targets.dat']);
+        fid=fopen([path_sim,path_Npara 'targets.json']);
         raw = fread(fid,inf);
         str = char(raw');
         fclose(fid);
@@ -279,17 +345,6 @@ end
 %% read in target signal parameters
 if(flags.signalflag==0 || flags.signalflag==1 || flags.signalflag==2 || flags.signalflag==22 || flags.signalflag==23 ||...
         flags.signalflag==24 || flags.signalflag==25 || flags.signalflag==99)
-    % data.frequencies=readmatrix([path_sim,'frequency.dat']);
-    % data.amplitudes=readmatrix([path_sim,'amp.dat']);
-    % data.phases=readmatrix([path_sim,'phase.dat']);
-    % if(parameters_raw.Ncomp_intf>0)
-    %     data.frequencies_intf=readmatrix([path_sim,'frequency_intf.dat']);
-    %     data.amplitudes_intf=readmatrix([path_sim,'amp_intf.dat']);
-    %     data.phases_intf=readmatrix([path_sim,'phase_intf.dat']);
-    % end
-
-    % Read target_properties JSON file
-    % data_json = jsondecode(fileread([path_sim, 'target_properties.dat']));
 
     data.frequencies = parameters_json.frequency;
     data.amplitudes = parameters_json.amp;

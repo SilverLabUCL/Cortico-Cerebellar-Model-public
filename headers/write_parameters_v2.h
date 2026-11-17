@@ -75,7 +75,7 @@ void write_parameters(nlohmann::json &json_parameters, netpara &para) {
 
 
 	// open file
-	std::ofstream param_file(para.path+"parameters.dat");		if (!param_file) exit(EXIT_FAILURE);
+	std::ofstream param_file(para.path+"parameters.json");		if (!param_file) exit(EXIT_FAILURE);
 	param_file << std::setw(4) << json_parameters << '\n';
 	param_file.close();
 

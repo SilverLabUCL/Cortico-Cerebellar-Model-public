@@ -2,12 +2,12 @@ function [CTX, X]=fig_RNN_scan_release(data,varargin)
 
 trainflag=0; logYflag=0; traceflag=0; statsflag=0; paraflag=0; medianflag=0; RMSEflag=0; dimflag=0;
 Xangleflag=0; Wnormflag=0; condflag=0; floquetflag=0; floquetfracflag=0;
-legendflag=0;ERRoutlierflag=0;sNflag=0;anglesflag=0;angles_signal_noiseflag=0;angles_noise_noiseflag=0;
+legendflag=0;ERRoutlierflag=1;sNflag=0;anglesflag=0;angles_signal_noiseflag=0;angles_noise_noiseflag=0;
 normflag=0;normnoise_flag=0;saveflag=0;xlogflag=0;ERRdistrbflag=0;pranglesflag=0;stabmarginflag=0;
 indvsineprodflag=0;fullsineprodflag=0;compactflag=0;labelsflag=0;markeroffflag=0;
 filenamestr='';
 Xangleidx=[2,1];
-outlthr=inf;
+outlthr=1;
 FMcutoff=1.0;
 Nang=12;
 maxprang=60;
@@ -23,7 +23,7 @@ while argidx<=length(varargin)
     elseif strcmpi( varargin{argidx}, 'show training' ) || strcmpi( varargin{argidx}, 'training' )
         trainflag = 1;
         argidx=argidx+1;
-    elseif strcmpi( varargin{argidx}, 'log axis' )
+    elseif strcmpi( varargin{argidx}, 'RMSE log axis' ) || strcmpi( varargin{argidx}, 'log axis' )
         logYflag = 1;
         logYlims=varargin{argidx+1};
         argidx=argidx+2;

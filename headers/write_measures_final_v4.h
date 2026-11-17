@@ -42,7 +42,7 @@ void write_measures_final(nlohmann::json &json_measures, FTcomp &Cmp, double RMS
 	}
 
 	// open file
-	std::ofstream measures_file(para.folder+"measures.dat");		if (!measures_file) exit(EXIT_FAILURE);
+	std::ofstream measures_file(para.folder+"measures.json");		if (!measures_file) exit(EXIT_FAILURE);
 	measures_file << std::setw(4) << json_measures << '\n';
 	measures_file.close();
 

@@ -48,7 +48,7 @@ struct netpara {
 	int cortexonlyflag;
 
 	// strings
-	std::string activation_function,activation_function_GC,fcodingmode,floquet,floquetmode,gainmode,GoC_mode,interference_signal,learningrule,learnmode,loop_test,MF_GC_connect,noisescaling,path,path_connect,ROwrite,signaltype,tau_mode,taugc_mode;
+	std::string activation_function,activation_function_GC,fcodingmode,floquet,floquetmode,gainmode,GoC_mode,interference_signal,learningrule,learnmode,loop_test,MF_GC_connect,noisescaling,path,ROwrite,signaltype,tau_mode,taugc_mode;
 	std::string folder,version;
 
 	//arrays

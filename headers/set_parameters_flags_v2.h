@@ -256,7 +256,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 
 	// target folders
 	para.path="simulation_results/";
-	para.path_connect="connectivity/";
 
 //------------------------------------------------------------------------
 // 	set fixed parameters
@@ -570,7 +569,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 //------------------------------------------------------------------------
 // 	write flags to file
 //------------------------------------------------------------------------
-	std::ofstream flags_file(para.path+"flags.dat");	if (!flags_file) exit(EXIT_FAILURE);
+	std::ofstream flags_file(para.path+"flags.json");	if (!flags_file) exit(EXIT_FAILURE);
 	nlohmann::json json_flags;
 	json_flags["actfuncflag"] = para.actfuncflag;
 	json_flags["actfuncflag_GC"] = para.actfuncflag_GC;
@@ -710,7 +709,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	std::cout << "Learning mode: " << para.learnmode << ", with Nreal = " << para.Nreal << " and seed = " << para.seed << std::endl;
 	std::cout <<"----------------------------------------------------------------" << std::endl;
 
-	std::cout << "Writing to " << para.path << " and " << para.path_connect <<std::endl;
+	std::cout << "Writing to " << para.path <<std::endl;
 	if(para.ROwriteflag==1) std::cout << "Writing readout activity to files." <<std::endl;
 
 	return 0;

@@ -605,7 +605,7 @@ int main (int argc, char* argv[]) {
 	double nuCx_avrg_cv=nuCx_avrg_std/arma::mean(nuCx_avrg_pop);
 
 	// write stats to file
-	std::ofstream stats_file(para.folder+"stats.dat");		if (!stats_file) exit(EXIT_FAILURE);
+	std::ofstream stats_file(para.folder+"stats.json");		if (!stats_file) exit(EXIT_FAILURE);
 
 	json_stats["hcx_mean"].push_back(stats_hcx.mean());
 	json_stats["hcx_std"].push_back(stats_hcx.stddev());
@@ -639,41 +639,57 @@ int main (int argc, char* argv[]) {
 	para.folder=para.path+"parameter_"+ std::to_string (np+1) + "/";
 
 	if(para.learnflag<99){
-		log_file << "\t \t \t Write single trial data to files"<< std::endl;
-		//	connectivity files
-		std::ofstream Wcx_file(para.path_connect+"Wcx.dat");					if (!Wcx_file) exit(EXIT_FAILURE);
-		std::ofstream Wout_RNN_file(para.path_connect+"Wout_RNN.dat");					if (!Wout_RNN_file) exit(EXIT_FAILURE);
-		std::ofstream Wfb_file(para.path_connect+"Wfb.dat");					if (!Wfb_file) exit(EXIT_FAILURE);
-		std::ofstream Wfb_interf_file(para.path_connect+"Wfb_interf.dat");		if (!Wfb_interf_file) exit(EXIT_FAILURE);
-
-		//	write stuff to connectivity-files
-		for(int j= 0; j < para.Ncx; j++) {
-			Wout_RNN_file << para.Wout[j] << "\t";
-		}
-		Wout_RNN_file << std::endl;
-		for(int i= 0; i < para.Ncx; i++) {
-			for(int j= 0; j < para.Wcx[i].Nsyn; j++) 	Wcx_file  << i << "\t" << para.Wcx[i].idx[j] << "\t" << para.Wcx[i].weight[j] << std::endl;
-			Wfb_file  << para.Wfb[i] << std::endl;
-			if(para.intrfflag==1){
-				for(int k=0; k < para.Ncomp_intf; k++) 	Wfb_interf_file  << para.Wfb_interf.at(i,k) << "\t";
-				Wfb_interf_file << std::endl;
+		log_file << "\t \t \t Write single trial data to JSON file" << std::endl;
+		// Connectivity data
+		// Wcx: [source neuron, target neuron, weight]
+		for (int i = 0; i < para.Ncx; i++) {
+			for (int j = 0; j < para.Wcx[i].Nsyn; j++) {
+				json_trial["Wcx"].push_back({
+					i,
+					para.Wcx[i].idx[j],
+					para.Wcx[i].weight[j]
+				});
 			}
 		}
-		for(int i= 0; i < para.Ncx; i++) {
+		// Wout_RNN
+		for (int j = 0; j < para.Ncx; j++) {
+			json_trial["Wout_RNN"].push_back(para.Wout[j]);
+		}
+		// Wfb
+		for (int i = 0; i < para.Ncx; i++) {
+			json_trial["Wfb"].push_back(para.Wfb[i]);
+		}
+		// Wfb_interf
+		if (para.intrfflag == 1) {
+			for (int i = 0; i < para.Ncx; i++) {
+				for (int k = 0; k < para.Ncomp_intf; k++) {
+					json_trial["Wfb_interf"][i].push_back(
+						para.Wfb_interf.at(i, k)
+					);
+				}
+			}
+		}
+		else if (para.intrfflag == 2) {
+			for (int i = 0; i < para.Ncx; i++) {
+				for (int j = 0; j < para.Ncomp_intf; j++) {
+					json_trial["Wfb_interf"][i].push_back(
+						para.Intf_weights(i, j)
+					);
+				}
+			}
+		}
+		// Single unit parameters
+		for (int i = 0; i < para.Ncx; i++) {
 			json_trial["tau_distrb"].push_back(para.tau_distrb[i]);
 		}
 
-		FTcomp_ctx.S_total.save(S_total_ctx_file,arma::raw_ascii);
+		// spanning vectors
+		FTcomp_ctx.S_total.save(S_total_ctx_file, arma::raw_ascii);
 
-		// write to file
-		std::ofstream single_trial_file(para.folder+"single_trial.dat");		if (!single_trial_file) exit(EXIT_FAILURE);
+		// Save file
+		std::ofstream single_trial_file(para.folder + "weights_single_trial.json"); if (!single_trial_file) exit(EXIT_FAILURE);
 		single_trial_file << std::setw(4) << json_trial << '\n';
 		single_trial_file.close();
-
-		Wcx_file.close();
-		Wout_RNN_file.close();
-		Wfb_file.close();
-		Wfb_interf_file.close();
 	}
 
 	bool write_FULL=1;

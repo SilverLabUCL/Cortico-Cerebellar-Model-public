@@ -226,7 +226,7 @@ void target_signal(netpara &para, nlohmann::json &json_parameters,  std::ofstrea
 		if ((t % para.write_every)==0) json_traces["time_FT"].push_back(t*para.dt);
 	}
 
-	std::ofstream traces_file(para.folder+"targets.dat");		if (!traces_file) exit(EXIT_FAILURE);
+	std::ofstream traces_file(para.folder+"targets.json");		if (!traces_file) exit(EXIT_FAILURE);
 	traces_file << std::setw(4) << json_traces << '\n';
 	traces_file.close();
 
