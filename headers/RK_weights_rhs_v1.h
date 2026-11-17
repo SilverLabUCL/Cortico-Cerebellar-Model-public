@@ -100,7 +100,7 @@ int RK_cortex_cereb_weights_rhs(double t, const double hcxW[], double dhcxW_dt[]
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(nuGC);
 	}
 	else if(para.gocmodeflag==3){
@@ -241,7 +241,7 @@ int RK_cortex_cereb_dyn_weights_rhs(double t, const double X[], double dX_dt[], 
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(nuGC);
 	}
 	else if(para.gocmodeflag==3){

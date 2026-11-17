@@ -1,11 +1,10 @@
-// added boost::program_options
-
 #include <vector>
 #include <armadillo>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_odeiv2.h>
 #include <sys/stat.h>
 #include <boost/program_options.hpp>
+#include <boost/version.hpp>
 namespace po = boost::program_options;
 
 #include "headers/json.hpp"
@@ -17,7 +16,7 @@ namespace po = boost::program_options;
 #include "headers/RK_rhs_v1.h"
 #include "headers/RK_weights_rhs_v1.h"
 #include "headers/update_rates_v1.h"
-#include "headers/RLS_step_cerebellum_allGCs_v3.h"
+#include "headers/RLS_step_FFL_v3.h"
 #include "headers/calc_FT_v7.h"
 #include "headers/calc_floquet_RK_vector_v1.h"
 #include "headers/calc_artificial_overtones_v4.h"
@@ -31,7 +30,6 @@ namespace po = boost::program_options;
 #include "headers/write_parameters_v2.h"
 #include "headers/write_measures_final_v4.h"
 #include "headers/set_taus_v1.h"
-#include "headers/write_single_v2.h"
 
 int main (int argc, char* argv[]) {
 
@@ -69,6 +67,7 @@ int main (int argc, char* argv[]) {
 //------------------------------------------------------------------------
 	nlohmann::json json_parameters;
 	nlohmann::json json_trial;
+
 //------------------------------------------------------------------------
 // 	prepare output files
 //------------------------------------------------------------------------
@@ -93,58 +92,33 @@ int main (int argc, char* argv[]) {
 	}
 	std::cout << std::endl;
 
-	std::ofstream nuCx_learn_file(para.path+"nuCx_learn.dat");		if (!nuCx_learn_file) exit(EXIT_FAILURE);
 	std::ofstream nuCx_test_file(para.path+"nuCx_test.dat");		if (!nuCx_test_file) exit(EXIT_FAILURE);
-	std::ofstream nuCx_FT_file(para.path+"nuCx_FT.dat");			if (!nuCx_FT_file) exit(EXIT_FAILURE);
+	std::ofstream nuCx_openloop_file(para.path+"nuCx_openloop.dat");			if (!nuCx_openloop_file) exit(EXIT_FAILURE);
 
-	std::ofstream nuGC_learn_file(para.path+"GC_learn.dat");			if (!nuGC_learn_file) exit(EXIT_FAILURE);
 	std::ofstream nuGC_test_file(para.path+"GC_test.dat");			if (!nuGC_test_file) exit(EXIT_FAILURE);
-	std::ofstream nuGC_FT_file(para.path+"GC_FT.dat");				if (!nuGC_FT_file) exit(EXIT_FAILURE);
-	std::ofstream hGC_FT_file(para.path+"hGC_FT.dat");				if (!hGC_FT_file) exit(EXIT_FAILURE);
-	std::ofstream Inputs_file(para.path+"Inputs.dat");				if (!Inputs_file) exit(EXIT_FAILURE);
+	std::ofstream nuGC_openloop_file(para.path+"GC_openloop.dat");				if (!nuGC_openloop_file) exit(EXIT_FAILURE);
 
-	std::ofstream freq_file(para.path+"frequency.dat");			if (!freq_file) exit(EXIT_FAILURE);
-	std::ofstream amp_file(para.path+"amp.dat");				if (!amp_file) exit(EXIT_FAILURE);
-	std::ofstream phase_file(para.path+"phase.dat");			if (!phase_file) exit(EXIT_FAILURE);
-	std::ofstream freq_intf_file(para.path+"frequency_intf.dat");		if (!freq_intf_file) exit(EXIT_FAILURE);
-	std::ofstream amp_intf_file(para.path+"amp_intf.dat");			if (!amp_intf_file) exit(EXIT_FAILURE);
-	std::ofstream phase_intf_file(para.path+"phase_intf.dat");		if (!phase_intf_file) exit(EXIT_FAILURE);
-
-	std::ofstream angles_ctx_file(para.path+"angles_ctx.dat");		if (!angles_ctx_file) exit(EXIT_FAILURE);
-	std::ofstream angles_cereb_file(para.path+"angles_cereb.dat");	if (!angles_cereb_file) exit(EXIT_FAILURE);
-	std::ofstream S_total_ctx_file(para.path+"stotal_ctx.dat");		if (!S_total_ctx_file) exit(EXIT_FAILURE);
-	std::ofstream S_total_cereb_file(para.path+"stotal_cereb.dat");	if (!S_total_cereb_file) exit(EXIT_FAILURE);
-
-	std::ofstream error_signed_train_file(para.path+"error_signed_train.dat");	if (!error_signed_train_file) exit(EXIT_FAILURE);
-	std::ofstream error_full_train_file(para.path+"error_full_train.dat");		if (!error_full_train_file) exit(EXIT_FAILURE);
-	std::ofstream error_signed_test_file(para.path+"error_test.dat");			if (!error_signed_test_file) exit(EXIT_FAILURE);
-	std::ofstream LR_file(para.path+"LR.dat");									if (!LR_file) exit(EXIT_FAILURE);
+	std::ofstream S_total_ctx_file(para.path+"stotal_RNN.dat");		if (!S_total_ctx_file) exit(EXIT_FAILURE);
+	std::ofstream S_total_cereb_file(para.path+"stotal_FFL.dat");	if (!S_total_cereb_file) exit(EXIT_FAILURE);
 
 	std::ofstream simcount_file(para.path+"simcount.dat");				if (!simcount_file) exit(EXIT_FAILURE);
 
-	std::ofstream single_ctxunit_files(para.path+"single_ctxunit.dat");	if (!single_ctxunit_files) exit(EXIT_FAILURE);
-	std::ofstream single_gc_files(para.path+"single_gc.dat");			if (!single_gc_files) exit(EXIT_FAILURE);
-	std::ofstream single_output_files(para.path+"single_output.dat");	if (!single_output_files) exit(EXIT_FAILURE);
-	std::ofstream single_ctxunit_FT_files(para.path+"single_ctxunit_FT.dat");	if (!single_ctxunit_FT_files) exit(EXIT_FAILURE);
-	std::ofstream single_gc_FT_files(para.path+"single_gc_FT.dat");			if (!single_gc_FT_files) exit(EXIT_FAILURE);
-	std::ofstream single_output_FT_files(para.path+"single_output_FT.dat");	if (!single_output_FT_files) exit(EXIT_FAILURE);
+	std::ofstream log_file(para.path+"log_file.dat");			if (!log_file) exit(EXIT_FAILURE);
 
-	std::ofstream alg_steps_file(para.path+"alg_steps.dat");			if (!alg_steps_file) exit(EXIT_FAILURE);
-
-	std::ofstream PC_test_files[para.Npara];
+	std::ofstream FFLoutput_test_files[para.Npara];
 
 	for(int np= 0; np < para.Npara; np++) {
 		para.folder=para.path+"parameter_"+ std::to_string (np+1) + "/";
 
-		PC_test_files[np].open(para.folder+"PC_test.dat", std::ofstream::out | std::ofstream::trunc);
-		PC_test_files[np].close();
+		FFLoutput_test_files[np].open(para.folder+"FFLoutput_test.dat", std::ofstream::out | std::ofstream::trunc);
+		FFLoutput_test_files[np].close();
 	}
 
 //	**************************************************
 //	Npara loop
 //	**************************************************
 	for(int np= 0; np < para.Npara; np++) {
-		alg_steps_file << "Npara = " << np+1 << std::endl;
+		log_file << "Npara = " << np+1 << std::endl;
 
 		//------------------------------------------------------------------------
 		//	create json objects for output of measures, stats & activity traces
@@ -155,17 +129,13 @@ int main (int argc, char* argv[]) {
 		// open output files
 		para.folder=para.path+"parameter_"+ std::to_string (np+1) + "/";
 
-		PC_test_files[np].open(para.folder+"PC_test.dat",std::ios::app);
+		FFLoutput_test_files[np].open(para.folder+"FFLoutput_test.dat",std::ios::app);
 
 		// set parameters
 		if(para.learnflag==100){
 			para.sigmaN=SCANPARA(np);
 			para.sigmaNgc=para.sigmaN;
 			std::cout << "sigmaN = " << para.sigmaN  << "\t sigmaNgc = " << para.sigmaNgc<< std::endl;
-		}
-		else if(para.learnflag==101){
-			para.GCthreshold_base=SCANPARA(np);
-			std::cout << "GC threshold = " << para.GCthreshold_base << std::endl;
 		}
 		else if(para.learnflag==102){
 			para.Ncx=SCANPARA(np);
@@ -244,10 +214,6 @@ int main (int argc, char* argv[]) {
 			para.rho_Wfb13=SCANPARA(np);
 			std::cout << "rho_Wfb_13 = " << para.rho_Wfb13 << std::endl;
 		}
-		else if(para.learnflag==134){
-			para.GCgainmax=SCANPARA(np);
-			std::cout << "GCgainmax = " << para.GCgainmax << std::endl;
-		}
 
 	para.dt=para.DT/para.lambda;
 	para.dt_euler=para.DT_euler/para.lambda;
@@ -284,8 +250,6 @@ int main (int argc, char* argv[]) {
 	else if(para.taugcmodeflag>0){
 		Ninput=para.Ncx+para.Ngc;
 	}
-	arma::mat INPUTS_OPEN(Ninput, para.Tmax_FM);
-	arma::mat INPUTS_CLOSED(Ninput, para.Tmax_FM);
 
 	arma::colvec fsparse(para.Ngc);
 	arma::colvec fsparse_pop(para.Tmax_FT);
@@ -301,13 +265,13 @@ int main (int argc, char* argv[]) {
 //------------------------------------------------------------------------
 // 	generate target signal(s)
 //------------------------------------------------------------------------
-	alg_steps_file << "\t \t write target signal(s) to: "<< para.path+"parameter_"+ std::to_string (np+1) + "/" << std::endl;
-	target_signal(para,freq_file,amp_file,phase_file,freq_intf_file,amp_intf_file,phase_intf_file,alg_steps_file);
+	log_file << "\t \t write target signal(s) to: "<< para.path+"parameter_"+ std::to_string (np+1) + "/" << std::endl;
+	target_signal(para,json_parameters,log_file);
 
 //------------------------------------------------------------------------
 // 	find population activity momenta of naive network
 //------------------------------------------------------------------------
-	alg_steps_file << "\t find population activity momenta of naive network" << std::endl;
+	log_file << "\t find population activity momenta of naive network" << std::endl;
 	para.GCthreshold=para.GCthreshold_base/para.sqNsyn;
 
 	// if RNN is linear, adjust thresholds in function of population activity variance
@@ -336,13 +300,13 @@ int main (int argc, char* argv[]) {
 //	**************************************************
 	for (int rr = 0; rr < para.Nreal; rr++){
 		if( ( (rr+1) % 5) ==0) std::cout << "Realisation number " << rr+1 << std::endl;
-		alg_steps_file << "\t Nreal = " << rr+1 << std::endl;
+		log_file << "\t Nreal = " << rr+1 << std::endl;
 
 //	--------------------------------------------------
 //	set up connectivity
 //	--------------------------------------------------
 	generate_weights(para);
-	alg_steps_file << "\t \t generate new weights"<< std::endl;
+	log_file << "\t \t generate new weights"<< std::endl;
 //	--------------------------------------------------
 // initial cortical state
 //	--------------------------------------------------
@@ -353,7 +317,7 @@ int main (int argc, char* argv[]) {
 	if (para.learnflag<99) {
 		for(int i= 0; i < para.Ncx; i++) json_trial["hcx_inistate"].push_back(hcxini[i]);
 	}
-	alg_steps_file << "\t \t generate initial conditions"<< std::endl;
+	log_file << "\t \t generate initial conditions"<< std::endl;
 
 //------------------------------------------------------------------------
 // 	begin integration of the system
@@ -404,7 +368,7 @@ int main (int argc, char* argv[]) {
 	para.closedloop=0;		// open loop
 	para.testphaseflag=0;	// no noise
 	para.RKflag=1;			// Runke-Kutta integration
-	alg_steps_file << "\t \t \t first transient phase"<< "\t RKflag = "<< para.RKflag << " \t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+	log_file << "\t \t \t first transient phase"<< "\t RKflag = "<< para.RKflag << " \t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 
 	tt=para.Tmax_trans;
 	status = gsl_odeiv2_driver_apply (RNNdriver, &time, (para.Tmax_trans-1)*para.dt, hcx);
@@ -412,7 +376,7 @@ int main (int argc, char* argv[]) {
 		printf ("Error in first transient phase, return value=%d\n", status);
 		break;
 	}
-	alg_steps_file << "\t \t \t End of first transient phase, T =  "<< para.Tmax_trans*para.dt  << "\t Ttot =  "<< time << std::endl;
+	log_file << "\t \t \t End of first transient phase, T =  "<< para.Tmax_trans*para.dt  << "\t Ttot =  "<< time << std::endl;
 
 	for(int i= 0; i < para.Ncx; i++) {
 		X[i]=hcx[i];
@@ -428,7 +392,7 @@ int main (int argc, char* argv[]) {
 	para.closedloop=0;		// open loop
 	para.testphaseflag=0;	// no noise
 	para.RKflag=1;			// Runke-Kutta integration
-	alg_steps_file << "\t \t \t Coding adjustment phase"<< "\t RKflag = "<< para.RKflag << "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+	log_file << "\t \t \t Coding adjustment phase"<< "\t RKflag = "<< para.RKflag << "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 	for(int t= 0; t < para.Tmax_Fadj; t++){															// Tmax_Fadj showld not be larger than Tmax_trans!!!!
 
 		if(para.taugcmodeflag==0){
@@ -457,7 +421,7 @@ int main (int argc, char* argv[]) {
 		tt++;
 	}
 	adjust_thresholds_gains(INPUTS_Fadj_GC, RATES_Fadj, para);
-	alg_steps_file << "\t \t \t End of coding adjustment phase, T =  "<< para.Tmax_Fadj*para.dt  << "\t Ttot =  "<< time << std::endl;
+	log_file << "\t \t \t End of coding adjustment phase, T =  "<< para.Tmax_Fadj*para.dt  << "\t Ttot =  "<< time << std::endl;
 
 	//	*************************
 	// 	second transient phase (always open loop / driven)
@@ -466,7 +430,7 @@ int main (int argc, char* argv[]) {
 	para.closedloop=0;		// open loop
 	para.testphaseflag=0;	// no noise
 	para.RKflag=1;			// Runke-Kutta integration
-	alg_steps_file << "\t \t \t Second transient phase"<< "\t RKflag = "<< para.RKflag << "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+	log_file << "\t \t \t Second transient phase"<< "\t RKflag = "<< para.RKflag << "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 	// if population activity from this phase is needed
 	if(para.intrfflag==2){
 		for(int t= 0; t < para.Tmax_trans; t++){
@@ -492,7 +456,6 @@ int main (int argc, char* argv[]) {
 				for(int i= 0; i < para.Ngc; i++) RATES_FTtrans.at(i, t)= para.nuGC[i];
 			}
 
-			if(para.learnflag<99) write_single(single_ctxunit_files, single_gc_files, single_output_files, time, para);
 			tt++;
 		}
 	}
@@ -510,16 +473,16 @@ int main (int argc, char* argv[]) {
 			printf ("Error in second transient phase, return value=%d\n", status);
 		}
 	}
-	alg_steps_file << "\t \t \t End of second transient phase, T =  "<< para.Tmax_trans*para.dt << "\t Ttot =  "<< time << std::endl;
+	log_file << "\t \t \t End of second transient phase, T =  "<< para.Tmax_trans*para.dt << "\t Ttot =  "<< time << std::endl;
 
 	//	*************************
 	//	Fourier analysis for generation of GC interference signals
 	//	*************************
 	if(para.intrfflag==2){
-		alg_steps_file << "\t \t \t Pre-Fourier analysis" << std::endl;
+		log_file << "\t \t \t Pre-Fourier analysis" << std::endl;
 		FTcomp FT_TRANS_comp_ctx;
 		calc_FT(RATES_FTtrans, FT_TRANS_comp_ctx, para, para.Tmax_trans,"cereb");
-		alg_steps_file << "\t \t \t Calculate artificial overtones" << std::endl;
+		log_file << "\t \t \t Calculate artificial overtones" << std::endl;
 		calc_artificial_overtones(FT_TRANS_comp_ctx, para, np, json_measures);
 	}
 
@@ -540,7 +503,7 @@ int main (int argc, char* argv[]) {
 		para.closedloop=0;		// open loop
 		para.testphaseflag=0;	// no noise
 		para.RKflag=1;			// Runke-Kutta integration
-		alg_steps_file << "\t \t \t LS training collection phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+		log_file << "\t \t \t LS training collection phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 		for(int t= 0; t < para.Tmax_learn; t++){
 
 			if(para.taugcmodeflag==0){
@@ -562,24 +525,13 @@ int main (int argc, char* argv[]) {
 			// collect activity for LS learning
 			for(int i= 0; i < para.Ngc; i++) RATES_LS_GC.at(i, t)= para.nuGC[i];
 
-			// write stuff to files
-			if ((t % para.write_every)==0 && para.learnflag<99) {
-
-				for(int i= 0; i < para.Ncx; i++)	nuCx_learn_file << para.nuCx[i] << " ";
-				nuCx_learn_file << std::endl;
-
-				for(int i= 0; i < para.Ngc; i++) 	nuGC_learn_file << para.nuGC[i] << " ";
-				nuGC_learn_file << std::endl;
-			}
-
-			if(para.learnflag<99) write_single(single_ctxunit_files, single_gc_files, single_output_files, time, para);
 			tt++;
 		}
-		alg_steps_file << "\t \t \t End of LS training collection phase, T =  "<< para.Tmax_learn*para.dt  << "\t Ttot =  "<< time << std::endl;
+		log_file << "\t \t \t End of LS training collection phase, T =  "<< para.Tmax_learn*para.dt  << "\t Ttot =  "<< time << std::endl;
 	//	*************************
 	//	LS/RR offline learning
 	//	*************************
-		alg_steps_file << "\t \t \t Calculate LS solution"<< std::endl;
+		log_file << "\t \t \t Calculate LS solution"<< std::endl;
 		arma::uword rnk;
 		// LS learning with GC activity
 		LS_solution(RATES_LS_GC, para.Wout_PC, RMSE_train, rnk, para, para.FACsigmaLS_gc);
@@ -598,7 +550,7 @@ int main (int argc, char* argv[]) {
 //	cereb learning
 //	**************************************************
 	para.algswitch=2;
-	alg_steps_file << "\t \t algswitch = " << para.algswitch<< "\t cerebellar learning"<< std::endl;
+	log_file << "\t \t algswitch = " << para.algswitch<< "\t cerebellar learning"<< std::endl;
 
 	if(para.taugcmodeflag>0){
 		for(int i= 0; i < para.Ngc; i++) {
@@ -615,7 +567,7 @@ int main (int argc, char* argv[]) {
 		para.testphaseflag=0;	// no noise
 		if(para.LRflag=1) 	para.RKflag=1;		// Runke-Kutta integration for DELTA
 		else 				para.RKflag=0;		// Euler integration for RLS
-		alg_steps_file << "\t \t \t RLS/DELTA learning phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+		log_file << "\t \t \t RLS/DELTA learning phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 		RMSE_train=para.error_signed_train=0;
 		stats_rmse.reset();
 
@@ -675,7 +627,7 @@ int main (int argc, char* argv[]) {
 			}
 
 			RMSE_train=NAN;
-			alg_steps_file << "\t \t \t End of DELTA learning phase, T =  "<< para.Tmax_learn*para.dt << "\t Ttot =  "<< time << std::endl;
+			log_file << "\t \t \t End of DELTA learning phase, T =  "<< para.Tmax_learn*para.dt << "\t Ttot =  "<< time << std::endl;
 
 			gsl_odeiv2_driver_free (RNNGCdriver_learn);
 		}
@@ -703,7 +655,7 @@ int main (int argc, char* argv[]) {
 				}
 
 				if ((t % para.RLSlearn_every)==0) {
-					RLS_step_cerebellum_allGCs(RLS_cereb, time, para);
+					RLS_step_FFL(RLS_cereb, time, para);
 				}
 				stats_rmse(para.error_signed_train*para.error_signed_train);
 
@@ -712,26 +664,9 @@ int main (int argc, char* argv[]) {
 				OUTvec[t]=para.PC;
 				Target[t]=func_target(time, para);
 
-				// write stuff to files
-				if ((t % para.write_every)==0 && para.learnflag<99) {
-					for(int i= 0; i < para.Ncx; i++)	nuCx_learn_file << para.nuCx[i] << " ";
-					nuCx_learn_file << std::endl;
-
-					for(int i= 0; i < para.Ngc; i++)	nuGC_learn_file << para.nuGC[i] << " ";
-					nuGC_learn_file << std::endl;
-				}
-
-				if (para.learnflag<99) {
-					if ((t % para.write_every)==0) {
-						LR_file << RLS_cereb.LR << std::endl;
-						error_signed_train_file << para.error_signed_train << std::endl;
-						error_full_train_file << sqrt(stats_rmse.mean()) << std::endl;
-					}
-				}
-				if(para.learnflag<99) write_single(single_ctxunit_files, single_gc_files, single_output_files, time, para);
 				tt++;
 			}
-			alg_steps_file << "\t \t \t End of RLS learning phase, T =  "<< para.Tmax_learn*para.dt << "\t Ttot =  "<< time << std::endl;
+			log_file << "\t \t \t End of RLS learning phase, T =  "<< para.Tmax_learn*para.dt << "\t Ttot =  "<< time << std::endl;
 
 			// calculate training RMSE
 			if(para.learnflag>0){
@@ -752,7 +687,7 @@ int main (int argc, char* argv[]) {
 	para.testphaseflag=1;					// testphase: add noise
 	if(para.LRflag<2) 	para.RKflag=0;		// Euler integration for RLS variants
 	else 				para.RKflag=1;		// Runke-Kutta integration for LS variants
-	alg_steps_file << "\t \t \t Test phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+	log_file << "\t \t \t Test phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 	RMSE_test=0;
 	int ti=0;
 	// Euler integration (with noise)
@@ -776,38 +711,24 @@ int main (int argc, char* argv[]) {
 			error_signed_test = para.PC-func_target(time, para);
 			RMSE_test+=error_signed_test*error_signed_test;
 
-			// get open closed trajectory
-			if( (ti < para.Tmax_FM) && bool_traj) {
-				if(para.taugcmodeflag==0){
-					for(int i= 0; i < para.Ncx; i++) 			INPUTS_CLOSED.at(i, ti)= hcx[i];
-				}
-				else if(para.taugcmodeflag>0){
-					for(int i= 0; i < para.Ncx+para.Ngc; i++) 	INPUTS_CLOSED.at(i, ti)= X[i];
-				}
-				ti++;
-			}
-
 			// write stuff to files
 			if ((t % (para.write_every* int(para.dt/para.dt_euler)))==0) {
 				if(para.learnflag<99){
-					error_signed_test_file << error_signed_test << std::endl;
-
 					for(int i= 0; i < para.Ncx; i++)	nuCx_test_file << para.nuCx[i] << " ";
 					nuCx_test_file << std::endl;
 					for(int i= 0; i < para.Ngc; i++) 	nuGC_test_file << para.nuGC[i] << " ";
 					nuGC_test_file << std::endl;
 				}
 				if(para.ROwriteflag==1) {
-					PC_test_files[np] << para.PC << "\t";
+					FFLoutput_test_files[np] << para.PC << "\t";
 				}
 			}
 
-			if(para.learnflag<99) write_single(single_ctxunit_files, single_gc_files, single_output_files, time, para);
 			tt++;
 		}
 		// calculate test RMSE
 		RMSE_test=sqrt(RMSE_test/double(para.Tmax_test_euler))/sqrt(para.signalvar);
-		alg_steps_file << "\t \t \t End of test phase, T =  "<< para.Tmax_test_euler*para.dt_euler << "\t Ttot =  "<< time << std::endl;
+		log_file << "\t \t \t End of test phase, T =  "<< para.Tmax_test_euler*para.dt_euler << "\t Ttot =  "<< time << std::endl;
 	}
 	// RK integration (noise-free)
 	else{
@@ -833,44 +754,31 @@ int main (int argc, char* argv[]) {
 			error_signed_test = para.PC-func_target(time, para);
 			RMSE_test+=error_signed_test*error_signed_test;
 
-			// get closed loop trajectory
-			if(t < para.Tmax_FM) {
-				if(para.taugcmodeflag==0){
-					for(int i= 0; i < para.Ncx; i++) INPUTS_CLOSED.at(i, t)= hcx[i];
-				}
-				else if(para.taugcmodeflag>0){
-					for(int i= 0; i < para.Ncx+para.Ngc; i++) INPUTS_CLOSED.at(i, t)= X[i];
-				}
-			}
-
 			// write stuff to files
 			if ((t % para.write_every)==0) {
 				if(para.learnflag<99){
-					error_signed_test_file << error_signed_test << std::endl;
-
 					for(int i= 0; i < para.Ncx; i++)	nuCx_test_file << para.nuCx[i] << " ";
 					nuCx_test_file << std::endl;
 					for(int i= 0; i < para.Ngc; i++) 	nuGC_test_file << para.nuGC[i] << " ";
 					nuGC_test_file << std::endl;
 				}
 				if(para.ROwriteflag==1) {
-					PC_test_files[np] << para.PC << "\t";
+					FFLoutput_test_files[np] << para.PC << "\t";
 				}
 			}
 
-			if(para.learnflag<99) write_single(single_ctxunit_files, single_gc_files, single_output_files, time, para);
 			tt++;
 		}
 		// calculate test RMSE
 		RMSE_test=sqrt(RMSE_test/double(para.Tmax_test))/sqrt(para.signalvar);
-		alg_steps_file << "\t \t \t End of test phase, T =  "<< para.Tmax_test*para.dt << "\t Ttot =  "<< time << std::endl;
+		log_file << "\t \t \t End of test phase, T =  "<< para.Tmax_test*para.dt << "\t Ttot =  "<< time << std::endl;
 	}
 
 	if(para.learnflag<99) {
 		std::cout << "Test error = " << RMSE_test << std::endl;
 	}
 	if(para.ROwriteflag==1) {
-	 	PC_test_files[np] << std::endl;
+	 	FFLoutput_test_files[np] << std::endl;
 	}
 
 	gsl_odeiv2_driver_free (RNNGCdriver_test);
@@ -878,7 +786,7 @@ int main (int argc, char* argv[]) {
 //	**************************************************
 // 	Calculate Floquet multipliers
 //	**************************************************
-	calc_floquet_RK_vector(X_save, para, json_measures, alg_steps_file);
+	calc_floquet_RK_vector(X_save, para, json_measures, log_file);
 
 //	*************************
 // 	Calculate norm of output weights
@@ -894,7 +802,7 @@ int main (int argc, char* argv[]) {
 	para.closedloop=0;		// open loop
 	para.testphaseflag=0;	// no noise
 	para.RKflag=1;			// Runke-Kutta integration
-	alg_steps_file << "\t \t \t Transient phase for FT calculations"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+	log_file << "\t \t \t Transient phase for FT calculations"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 	// set initial network state
 	for(int i= 0; i < para.Ncx; i++) {
 		hcx[i]=hcx_save[i];
@@ -919,9 +827,9 @@ int main (int argc, char* argv[]) {
 		printf ("Error during Fourier transient phase, return value=%d\n", status);
 		break;
 	}
-	alg_steps_file << "\t \t \t End of FT transient phase, T =  "<< para.Tmax_trans*para.dt << "\t Ttot =  "<< time << std::endl;
+	log_file << "\t \t \t End of FT transient phase, T =  "<< para.Tmax_trans*para.dt << "\t Ttot =  "<< time << std::endl;
 
-	alg_steps_file << "\t \t \t FT trajectory extraction phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+	log_file << "\t \t \t FT trajectory extraction phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 	// multiple periods for FT trajectory
 	for(int t= 0; t < para.Tmax_FT; t++){
 		fsparse_pop[t]=0;
@@ -947,16 +855,6 @@ int main (int argc, char* argv[]) {
 		for(int i= 0; i < para.Ncx; i++) RATES_FT.at(i, t)= para.nuCx[i];
 		for(int i= 0; i < para.Ngc; i++) RATES_FT_GC.at(i, t)= para.nuGC[i];
 
-		// get open loop trajectory
-		if(t < para.Tmax_FM) {
-			if(para.taugcmodeflag==0){
-				for(int i= 0; i < para.Ncx; i++) INPUTS_OPEN.at(i, t)= hcx[i];
-			}
-			else if(para.taugcmodeflag>0){
-				for(int i= 0; i < para.Ncx+para.Ngc; i++) INPUTS_OPEN.at(i, t)= X[i];
-			}
-		}
-
 		// set activity of output equal to target
 		para.PC =func_target(time, para);
 
@@ -977,21 +875,18 @@ int main (int argc, char* argv[]) {
 		// write to files
 		if(para.learnflag<99){
 			if ((t % para.write_every)==0) {
-				for(int i= 0; i < para.Ncx; i++)	nuCx_FT_file << para.nuCx[i] << " ";
-				nuCx_FT_file << std::endl;
+				for(int i= 0; i < para.Ncx; i++)	nuCx_openloop_file << para.nuCx[i] << " ";
+				nuCx_openloop_file << std::endl;
 
-				for(int i= 0; i < para.Ngc; i++) 	nuGC_FT_file << para.nuGC[i] << " ";
-				nuGC_FT_file << std::endl;
+				for(int i= 0; i < para.Ngc; i++) 	nuGC_openloop_file << para.nuGC[i] << " ";
+				nuGC_openloop_file << std::endl;
 
-				for(int i= 0; i < para.Ngc; i++) 	hGC_FT_file << para.hGC[i] << " ";
-				hGC_FT_file << std::endl;
 			}
 		}
 
-		if(para.learnflag<99) write_single(single_ctxunit_FT_files, single_gc_FT_files, single_output_FT_files, time, para);
 		tt++;
 	}
-	alg_steps_file << "\t \t \t End of FT trajectory extraction phase, T =  "<< para.Tmax_FT*para.dt  << "\t Ttot =  "<< time << std::endl;
+	log_file << "\t \t \t End of FT trajectory extraction phase, T =  "<< para.Tmax_FT*para.dt  << "\t Ttot =  "<< time << std::endl;
 
 	gsl_odeiv2_driver_free (RNNGCdriver_FT);
 
@@ -1045,19 +940,19 @@ int main (int argc, char* argv[]) {
 	stats_file.close();
 
 	// calculate Fourier components & FT dimensionality
-	alg_steps_file << "\t \t \t Fourier analysis" << std::endl;
+	log_file << "\t \t \t Fourier analysis" << std::endl;
 	FTcomp FTcomp_ctx;
 	FTcomp FTcomp_cereb;
 	calc_FT(RATES_FT, FTcomp_ctx, para, para.Tmax_FT,"ctx");
 	calc_FT(RATES_FT_GC, FTcomp_cereb, para, para.Tmax_FT,"cereb");
 
 	// calculate dimensionality
-	alg_steps_file << "\t \t \t Calculate dimensionality" << std::endl;
+	log_file << "\t \t \t Calculate dimensionality" << std::endl;
 	double DIM_ctx=calc_dim_noEV(RATES_FT,para.Tmax_FT);
 	double DIM_cereb=calc_dim_noEV(RATES_FT_GC,para.Tmax_FT);
 
 	// write to files: ctx
-	alg_steps_file << "\t \t \t Write population measures to files"<< std::endl;
+	log_file << "\t \t \t Write population measures to files"<< std::endl;
 	json_measures["DIM_ctx"].push_back(DIM_ctx);
 	json_measures["DIM_FT_ctx"].push_back(FTcomp_ctx.dim_signal);
 	json_measures["COND_ctx"].push_back(FTcomp_ctx.cond_signal);
@@ -1069,16 +964,6 @@ int main (int argc, char* argv[]) {
 	json_measures["COND_cereb"].push_back(FTcomp_cereb.cond_signal);
 	json_measures["COND_total_cereb"].push_back(FTcomp_cereb.cond_total);
 
-	// RMSE of driven and closed loop trajectories
-	arma::vec DEVT(para.Tmax_FM);
-	arma::vec OPENR(para.Tmax_FM);
-	for(int t= 0; t < para.Tmax_FM; t++){
-		DEVT(t)=arma::norm(INPUTS_OPEN.col(t)-INPUTS_CLOSED.col(t));
-		OPENR(t)=arma::norm(INPUTS_OPEN.col(t));
-	}
-	//~ double rmse_traj= arma::mean(DEVT)/sqrt(INPUTS_OPEN.n_rows);
-	double rmse_traj= arma::mean(DEVT)/arma::mean(OPENR);
-	json_measures["Traj_rmse_"].push_back(rmse_traj);
 
 //	*************************
 // 	write output to files
@@ -1086,25 +971,25 @@ int main (int argc, char* argv[]) {
 	para.folder=para.path+"parameter_"+ std::to_string (np+1) + "/";
 
 	if(para.learnflag<99){
-		alg_steps_file << "\t \t \t Write single trial data to files"<< std::endl;
+		log_file << "\t \t \t Write single trial data to files"<< std::endl;
 		//	connectivity files
 		std::ofstream Wcx_file(para.path_connect+"Wcx.dat");				if (!Wcx_file) exit(EXIT_FAILURE);
-		std::ofstream Wout_file(para.path_connect+"Wout.dat");				if (!Wout_file) exit(EXIT_FAILURE);
+		std::ofstream Wout_RNN_file(para.path_connect+"Wout_RNN.dat");			if (!Wout_RNN_file) exit(EXIT_FAILURE);
 		std::ofstream Wfb_file(para.path_connect+"Wfb.dat");				if (!Wfb_file) exit(EXIT_FAILURE);
 		std::ofstream Wfb_interf_file(para.path_connect+"Wfb_interf.dat");	if (!Wfb_interf_file) exit(EXIT_FAILURE);
 		std::ofstream Wmf_file(para.path_connect+"Wmf.dat");				if (!Wmf_file) exit(EXIT_FAILURE);
-		std::ofstream Wout_PC_file(para.path_connect+"J.dat");					if (!Wout_PC_file) exit(EXIT_FAILURE);
+		std::ofstream Wout_FLL_file(para.path_connect+"Wout_FFL.dat");		if (!Wout_FLL_file) exit(EXIT_FAILURE);
 		std::ofstream MFidx_file(para.path_connect+"MFidx.dat");			if (!MFidx_file) exit(EXIT_FAILURE);
 
 		//	write stuff to connectivity-files
 		for(int j= 0; j < para.Ngc; j++){
-			Wout_PC_file << para.Wout_PC[j] << "\t";
+			Wout_FLL_file << para.Wout_PC[j] << "\t";
 		}
-		Wout_PC_file << std::endl;
+		Wout_FLL_file << std::endl;
 		for(int j= 0; j < para.Ncx; j++) {
-			Wout_file << para.Wout[j] << "\t";
+			Wout_RNN_file << para.Wout[j] << "\t";
 		}
-		Wout_file << std::endl;
+		Wout_RNN_file << std::endl;
 		for(int i= 0; i < para.Ncx; i++) {
 			for(int j= 0; j < para.Wcx[i].Nsyn; j++) 	Wcx_file  << i << "\t" << para.Wcx[i].idx[j] << "\t" << para.Wcx[i].weight[j] << std::endl;
 			Wfb_file  << para.Wfb[i] << std::endl;
@@ -1137,9 +1022,6 @@ int main (int argc, char* argv[]) {
 
 		for (int j= 0;j<para.Nmf;j++) MFidx_file << j+1 << "\t" << para.Ncx_to_MF_idx[j]+1 << "\t" << 1 << std::endl;
 
-		FTcomp_ctx.Angles_all.save(angles_ctx_file,arma::raw_ascii);
-		FTcomp_cereb.Angles_all.save(angles_cereb_file,arma::raw_ascii);
-
 		FTcomp_ctx.S_total.save(S_total_ctx_file,arma::raw_ascii);
 		FTcomp_cereb.S_total.save(S_total_cereb_file,arma::raw_ascii);
 
@@ -1150,62 +1032,38 @@ int main (int argc, char* argv[]) {
 
 		Wcx_file.close();
 		Wmf_file.close();
-		Wout_file.close();
+		Wout_RNN_file.close();
 		Wfb_file.close();
 		Wfb_interf_file.close();
-		Wout_PC_file.close();
+		Wout_FLL_file.close();
 		MFidx_file.close();
 	}
 
 	bool write_FULL=1;
-	alg_steps_file << "\t \t \t Write cereb summary data to files"<< std::endl;
+	log_file << "\t \t \t Write summary data to files"<< std::endl;
 	write_measures_final(json_measures, FTcomp_cereb, RMSE_train, RMSE_test, Wnorm_cereb, "cereb", para, write_FULL);
 
 	simcount_file << 1 << std::endl;
 
 	} // end of Nreal-loop
 
-	PC_test_files[np].close();
+	FFLoutput_test_files[np].close();
 
 	} // end of Npara-loop
 
 //	*************************
 // 	terminate program
-	alg_steps_file << "Terminate"<< std::endl;
-   	nuCx_learn_file.close();
+	log_file << "Terminate"<< std::endl;
    	nuCx_test_file.close();
-	nuCx_FT_file.close();
+	nuCx_openloop_file.close();
 
-	nuGC_learn_file.close();
 	nuGC_test_file.close();
-	nuGC_FT_file.close();
-	hGC_FT_file.close();
-	Inputs_file.close();
+	nuGC_openloop_file.close();
 
-	error_signed_test_file.close();
-	error_signed_train_file.close();
-	error_full_train_file.close();
-	LR_file.close();
-
-	single_ctxunit_files.close();
-	single_gc_files.close();
-	single_output_files.close();
-	single_ctxunit_FT_files.close();
-	single_gc_FT_files.close();
-	single_output_FT_files.close();
-
-	freq_file.close();
-	amp_file.close();
-	phase_file.close();
-	freq_intf_file.close();
-	amp_intf_file.close();
-	phase_intf_file.close();
-	angles_ctx_file.close();
-	angles_cereb_file.close();
 	S_total_ctx_file.close();
 	S_total_cereb_file.close();
 
-	alg_steps_file.close();
+	log_file.close();
 	simcount_file.close();
 
 	gsl_rng_free (para.r);

@@ -5,24 +5,6 @@ arma::vec set_scan_variables(int &Npara, int learnflag, netpara &para) {
 //	parameters for scans
 //------------------------------------------------------------------------
 	arma::vec SIGMAN = arma::logspace<arma::vec>(-5, -1, 10);
-	arma::vec THRESH;
-	if(para.actfuncflag==0){
-		if(para.simplemapflag==1){
-			THRESH = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 0.70,  0.8,  1, 1.2, 1.5, 2, 2.5};	// non-linear network
-			THRESH=THRESH/4.0;
-		}
-		else{
-			THRESH = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 0.70,  0.8,  1, 1.2, 1.5, 2, 2.5};	// non-linear network
-		}
-	}
-	else{
-		if(para.simplemapflag==1){
-			THRESH = arma::linspace<arma::vec>(-1, 1, 21);
-		}
-		else{
-			THRESH = arma::linspace<arma::vec>(-1, 1, 21);
-		}
-	}
 	arma::vec GCGAIN = arma::logspace<arma::vec>(-1.699, 2,20);
 	arma::vec NGC = { 250, 400, 500, 600, 700, 800, 1000, 1500, 2000, 3000};
 	arma::vec NCX = { 200, 400, 500, 600, 700, 800, 1000, 1500, 2000, 3000};
@@ -30,28 +12,17 @@ arma::vec set_scan_variables(int &Npara, int learnflag, netpara &para) {
 	arma::vec NFB = { 1, 2, 10, 20, 100, 200, 500, 1000};
 	arma::vec WGOC =  arma::join_cols(1.0*arma::zeros(1),  arma::logspace<arma::vec>(-1, 0.301, 20));
 	arma::vec SIGAMP =arma::logspace<arma::vec>(-1, 0.7 ,20);
-	arma::vec LAMBDA;
-	if(para.actfuncflag==0 && para.g > 1.0){
-		LAMBDA = {0.4, 0.8, 1, 1.5, 2, 3, 4, 5, 7, 11, 13, 15, 20, 25};	// non-linear + chaotic network
-	}
-	else {
-		LAMBDA = arma::logspace<arma::vec>(0, 1.8451, 25);
-	}
+	arma::vec LAMBDA = arma::logspace<arma::vec>(0, 1.8451, 25);
 	arma::vec PHI  = arma::linspace<arma::vec>(0, M_PI, 20);
 	arma::vec AMPMOD  = arma::linspace<arma::vec>(-0.7, 0.7, Npara);
 	arma::vec SIGMALS  = {0.00001, 0.0001, 0.001, 0.01, 0.1};
 	arma::vec TSIM = {2, 4, 8, 10, 12, 15, 20, 25, 30, 40};
-	arma::vec TUNSUP = {0, 10, 20, 40, 80, 120};
 	arma::vec G = arma::linspace<arma::vec>(0.05,0.95,19);
 	arma::vec ETA = arma::logspace<arma::vec>(-4, -2, 10);
-	arma::vec ALPHAN = {-1, -0.5, -0.25, 0, 1, 2, 3, 4};
-	arma::vec BETAN =arma::linspace<arma::vec>(0.0, 1.0, 10);
-	arma::vec PZ = {0, 0.1, 0.3, 0.5, 0.7, 0.9};
 	arma::vec FCODING =arma::linspace<arma::vec>(0.01, 0.98, 20);
 	arma::vec SPALPHA =arma::logspace<arma::vec>(0, 2, 10);
 	arma::vec RHOWFB = arma::join_cols( arma::tanh(arma::linspace(0,4,20)), 1.0*arma::ones(1));
 	arma::vec SIGAMPINTF =arma::logspace<arma::vec>(-2, 2 ,20);
-	arma::vec GAINMAX =arma::logspace<arma::vec>(0,2,20);
 
 	para.algswitch=1;
 	if(learnflag==1){
@@ -73,10 +44,6 @@ arma::vec set_scan_variables(int &Npara, int learnflag, netpara &para) {
 	else if(learnflag==100) {
 		Npara=SIGMAN.n_elem;
 		SCANPARA=SIGMAN;
-	}
-	else if(learnflag==101){
-		Npara=THRESH.n_elem;
-		SCANPARA=THRESH;
 	}
 	else if(learnflag==102){
 		Npara=NCX.n_elem;
@@ -118,13 +85,6 @@ arma::vec set_scan_variables(int &Npara, int learnflag, netpara &para) {
 		Npara=ETA.n_elem;
 		SCANPARA=ETA;
 	}
-	else if(learnflag==115){
-		Npara=TUNSUP.n_elem;
-		SCANPARA=TUNSUP;
-	}
-	else if(learnflag==116){
-		std::cout << "Varying parameters of target signal. Scanning over " << Npara << " signals with " << para.Nreal << " initial conditions per signal." << std::endl;
-	}
 	else if(learnflag==118){
 		Npara=PHI.n_elem;
 		SCANPARA=PHI;
@@ -136,14 +96,6 @@ arma::vec set_scan_variables(int &Npara, int learnflag, netpara &para) {
 	else if(learnflag==120){
 		Npara=SIGMALS.n_elem;
 		SCANPARA=SIGMALS;
-	}
-	else if(learnflag==121){
-		Npara=ALPHAN.n_elem;
-		SCANPARA=ALPHAN;
-	}
-	else if(learnflag==122){
-		Npara=PZ.n_elem;
-		SCANPARA=PZ;
 	}
 	else if(learnflag==123){
 		Npara=FCODING.n_elem;
@@ -161,17 +113,9 @@ arma::vec set_scan_variables(int &Npara, int learnflag, netpara &para) {
 		Npara=SIGAMPINTF.n_elem;
 		SCANPARA=SIGAMPINTF;
 	}
-	else if(learnflag==130){
-		Npara=BETAN.n_elem;
-		SCANPARA=BETAN;
-	}
 	else if(learnflag==131){
 		Npara=GCGAIN.n_elem;
 		SCANPARA=GCGAIN;
-	}
-	else if(learnflag==134){
-		Npara=GAINMAX.n_elem;
-		SCANPARA=GAINMAX;
 	}
 	else {
 		para.algswitch=0;

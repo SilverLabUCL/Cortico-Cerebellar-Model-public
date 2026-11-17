@@ -1,3 +1,4 @@
+// RNN+FFL
 void update_rates(double t, const double X[], netpara &para) {
 
 	// take system state from integrator and calculate firing rates
@@ -17,7 +18,7 @@ void update_rates(double t, const double X[], netpara &para) {
 		for (int j=0; j<para.Nmf; j++) 	MF[j]=para.nuCx[para.Ncx_to_MF_idx[j]];
 
 		// Golgi cell
-		if(para.gocmodeflag==1 || para.gocmodeflag==2){
+		if(para.gocmodeflag==1){
 			GoC=arma::mean(para.nuGC);
 		}
 		else if(para.gocmodeflag==3){
@@ -61,6 +62,17 @@ void update_rates(double t, const double X[], netpara &para) {
 		if(para.intrfflag==2){
 			for (int j=0; j<para.Ncomp_intf; j++)	para.nuGC[i]=para.nuGC[i]+input_intf[j]*para.Intf_weights.at(i,j);
 		}
+	}
+
+	return;
+}
+
+// RNN only
+void update_rates_ctx(double t, const double X[], netpara &para) {
+
+	// take system state from integrator and calculate firing rates
+	for(int i= 0; i < para.Ncx; i++) {
+		para.nuCx[i]=(*para.Ptr_ctxIO)(X[i],1.0);
 	}
 
 	return;

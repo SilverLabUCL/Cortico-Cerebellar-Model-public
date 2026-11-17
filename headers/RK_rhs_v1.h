@@ -55,7 +55,7 @@ int RK_cortex_rhs(double t, const double hcx[], double dhcx_dt[], void *params) 
 }
 
 ////////////////////////////////////////////////////
-// RNN + instantaneous GCs
+// RNN + instantaneous FFL
 ////////////////////////////////////////////////////
 int RK_cortex_cereb_rhs(double t, const double hcx[], double dhcx_dt[], void *params) {
 
@@ -80,7 +80,7 @@ int RK_cortex_cereb_rhs(double t, const double hcx[], double dhcx_dt[], void *pa
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(nuGC);
 	}
 	else if(para.gocmodeflag==3){
@@ -157,7 +157,7 @@ int RK_cortex_cereb_rhs(double t, const double hcx[], double dhcx_dt[], void *pa
 }
 
 ////////////////////////////////////////////////////
-// RNN + dynamic GCs
+// RNN + dynamic FFL
 ////////////////////////////////////////////////////
 int RK_cortex_cereb_dyn_rhs(double t, const double X[], double dX_dt[], void *params) {
 
@@ -185,7 +185,7 @@ int RK_cortex_cereb_dyn_rhs(double t, const double X[], double dX_dt[], void *pa
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(nuGC);
 	}
 	else if(para.gocmodeflag==3){

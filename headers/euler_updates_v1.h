@@ -89,7 +89,7 @@ void euler_step_cortex_cerebellum(double t, double hcx[], netpara &para) {
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=para.nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(para.nuGC);
 	}
 	else if(para.gocmodeflag==3){
@@ -242,7 +242,7 @@ void euler_step_cortex_cerebellum_dyn(double t, double X[], netpara &para) {
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=para.nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(para.nuGC);
 	}
 	else if(para.gocmodeflag==3){

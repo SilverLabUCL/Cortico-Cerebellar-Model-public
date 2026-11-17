@@ -15,7 +15,7 @@ double func_target_intf(double t, int idx_intf, netpara &para){
 	return para.amps_intf_func[idx_intf]*cos(para.freqs_intf_func[idx_intf]*t + para.phases_intf_func[idx_intf]);
 }
 
-void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_file, std::ofstream &phase_file, std::ofstream &freq_intf_file, std::ofstream &amp_intf_file, std::ofstream &phase_intf_file, std::ofstream &alg_steps_file) {
+void target_signal(netpara &para, nlohmann::json &json_parameters,  std::ofstream &log_file) {
 
 	int Tmax_learn=para.Tmax_learn;
 	int Tmax_test=para.Tmax_test;
@@ -25,12 +25,6 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 
 	int Ncomp=para.Ncomp;
 	int Ncomp_intf=para.Ncomp_intf;
-
-	para.target=arma::zeros<arma::vec>(Tmax_learn);
-	para.test=arma::zeros<arma::vec>(Tmax_test);
-	para.fourier=arma::zeros<arma::vec>(Tmax_FT);
-	para.trans=arma::zeros<arma::vec>(Tmax_trans);
-	para.FM=arma::zeros<arma::vec>(Tmax_FM);
 
 	para.signalavrg=0;
 	para.signalvar=0;
@@ -46,53 +40,43 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 	para.phases_intf_func=arma::zeros<arma::vec>(para.Ncomp_intf);
 
 	if(para.signalflag==23)	{
-		alg_steps_file << "\t generate cosine target signal(s)"<< std::endl;
+		log_file << "\t generate cosine target signal(s)"<< std::endl;
 	}
 	else{
-		alg_steps_file << "\t generate target signal(s)"<< std::endl;
+		log_file << "\t generate target signal(s)"<< std::endl;
 	}
 
 	// Mix of 4 sine waves from Sussillo & Abbott 2009, Fig 2d; the original signal is obtained for lambda=0.8;
 	if (para.signalflag==0){
-		double amp = 1.6;
-		for(int t= 0; t < Tmax_learn; t++) {
-			para.target[t] = 	(amp/1.0)*sin(2.0*M_PI*para.lambda*t*para.dt) + (amp/2.0)*sin(2.0*M_PI*2*para.lambda*t*para.dt)
-								+ (amp/6.0)*sin(2.0*M_PI*3*para.lambda*t*para.dt) + (amp/3.0)*sin(2.0*M_PI*4*para.lambda*t*para.dt);
-			para.target[t] = para.target[t]/1.5;
-		}
-		for(int t= Tmax_learn; t < (Tmax_learn+Tmax_test); t++) {
-			para.test(t-Tmax_learn) = (amp/1.0)*sin(2.0*M_PI*para.lambda*t*para.dt) + (amp/2.0)*sin(2.0*M_PI*2*para.lambda*t*para.dt)
-								+ (amp/6.0)*sin(2.0*M_PI*3*para.lambda*t*para.dt) + (amp/3.0)*sin(2.0*M_PI*4*para.lambda*t*para.dt);
-			para.test(t-Tmax_learn) = para.test(t-Tmax_learn)/1.5;
-		}
-		for(int t= 0; t < Tmax_trans; t++) {
-			para.trans[t] = 	(amp/1.0)*sin(2.0*M_PI*para.lambda*t*para.dt) + (amp/2.0)*sin(2.0*M_PI*2*para.lambda*t*para.dt)
-								+ (amp/6.0)*sin(2.0*M_PI*3*para.lambda*t*para.dt) + (amp/3.0)*sin(2.0*M_PI*4*para.lambda*t*para.dt);
-			para.trans[t] = para.trans[t]/1.5;
-		}
-		for(int t= Tmax_trans; t < (Tmax_trans+Tmax_FT); t++) {
-			para.fourier(t-Tmax_trans) = 	(amp/1.0)*sin(2.0*M_PI*para.lambda*t*para.dt) + (amp/2.0)*sin(2.0*M_PI*2*para.lambda*t*para.dt)
-								+ (amp/6.0)*sin(2.0*M_PI*3*para.lambda*t*para.dt) + (amp/3.0)*sin(2.0*M_PI*4*para.lambda*t*para.dt);
-			para.fourier(t-Tmax_trans) = para.fourier(t-Tmax_trans)/1.5;
-		}
-		for(int t= Tmax_trans; t < (Tmax_trans+Tmax_FM); t++) {
-			para.FM(t-Tmax_trans) = 	(amp/1.0)*sin(2.0*M_PI*para.lambda*t*para.dt) + (amp/2.0)*sin(2.0*M_PI*2*para.lambda*t*para.dt)
-								+ (amp/6.0)*sin(2.0*M_PI*3*para.lambda*t*para.dt) + (amp/3.0)*sin(2.0*M_PI*4*para.lambda*t*para.dt);
-			para.FM(t-Tmax_trans) = para.FM(t-Tmax_trans)/1.5;
-		}
+		double amp = para.sigAmp*1.6/1.5;
 
 		para.freqs(0) =para.lambda;
 		para.freqs(1) =2*para.lambda;
 		para.freqs(2) =3*para.lambda;
 		para.freqs(3) =4*para.lambda;
 
-		// write to files
-		freq_file << para.freqs(0) << "\t" << para.freqs(1) << "\t" << para.freqs(2) << "\t" << para.freqs(3) << "\t";
-		amp_file << amp/1.5 << "\t" << amp/(2.0*1.5) << "\t" << amp/(6.0*1.5) << "\t" << amp/(3.0*1.5) << "\t";
-		phase_file << 0 << "\t" << 0 << "\t" << 0 << "\t" << 0 << "\t";
-		freq_file << std::endl;
-		amp_file << std::endl;
-		phase_file << std::endl;
+		para.amps_func(0) =amp;
+		para.amps_func(1) =amp/2.0;
+		para.amps_func(2) =amp/6.0;
+		para.amps_func(3) =amp/3.0;
+
+		for(int j= 0; j < Ncomp; j++) {
+			para.freqs_func(j) =2.0*M_PI*para.freqs(j);
+			para.phases_func(j) =M_PI/2.0;
+		}
+
+		// write output to file
+		nlohmann::json json_freq_tmp;
+		nlohmann::json json_amp_tmp;
+		nlohmann::json json_phase_tmp;
+		for(int j = 0; j < Ncomp; j++) {
+			json_freq_tmp.push_back(para.freqs(j));
+			json_amp_tmp.push_back(para.amps_func(j));
+			json_phase_tmp.push_back(para.phases_func(j));
+		}
+		json_parameters["frequency"].push_back(json_freq_tmp);
+		json_parameters["amp"].push_back(json_amp_tmp);
+		json_parameters["phase"].push_back(json_phase_tmp);
 
 	}
 	// cos (or sin) waves with Ncomp components with fixed parameters
@@ -144,40 +128,44 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 			amp_intf(j)=para.sigAmp_intf*para.amps_intf(j)/ampnorm;
 		}
 
-		// generate cosine waves
 		for(int j= 0; j < Ncomp; j++) {
-			w=2.0*M_PI*freq(j);
-			for(int t= Tmax_learn; t < (Tmax_learn+Tmax_test); t++) {
-				para.test(t-Tmax_learn) += amp(j)*cos(w*t*para.dt  + phase(j));
-			}
-		}
-
-		// write to files
-		for(int j= 0; j < Ncomp; j++) {
-			freq_file << freq(j) << "\t";
-			amp_file << amp(j) << "\t";
-			phase_file << phase(j) << "\t";
 			para.freqs(j) =freq(j);
 			para.freqs_func(j) =2.0*M_PI*freq(j);
 			para.amps_func(j) =amp(j);
 			para.phases_func(j) =phase(j);
 		}
-		freq_file << std::endl;
-		amp_file << std::endl;
-		phase_file << std::endl;
+
+		// write output to file
+		nlohmann::json json_freq_tmp;
+		nlohmann::json json_amp_tmp;
+		nlohmann::json json_phase_tmp;
+		for(int j = 0; j < Ncomp; j++) {
+			json_freq_tmp.push_back(freq(j));
+			json_amp_tmp.push_back(amp(j));
+			json_phase_tmp.push_back(phase(j));
+		}
+		json_parameters["frequency"].push_back(json_freq_tmp);
+		json_parameters["amp"].push_back(json_amp_tmp);
+		json_parameters["phase"].push_back(json_phase_tmp);
 
 		for(int j= 0; j < Ncomp_intf; j++) {
-			freq_intf_file << freq_intf(j) << "\t";
-			amp_intf_file << amp_intf(j) << "\t";
-			phase_intf_file << para.phases_intf(j) << "\t";
 			para.freqs_intf(j) =freq_intf(j);
 			para.freqs_intf_func(j) =2.0*M_PI*freq_intf(j);
 			para.amps_intf_func(j) =amp_intf(j);
 			para.phases_intf_func(j) =phase_intf(j);
 		}
-		freq_intf_file << std::endl;
-		amp_intf_file << std::endl;
-		phase_intf_file << std::endl;
+
+		json_freq_tmp.clear();
+		json_amp_tmp.clear();
+		json_phase_tmp.clear();
+		for(int j = 0; j < Ncomp_intf; j++) {
+			json_freq_tmp.push_back(freq_intf(j));
+			json_amp_tmp.push_back(amp_intf(j));
+			json_phase_tmp.push_back(phase_intf(j));
+		}
+		json_parameters["frequency_inft"].push_back(json_freq_tmp);
+		json_parameters["amp_inft"].push_back(json_amp_tmp);
+		json_parameters["phase_inft"].push_back(json_phase_tmp);
 	}
 	// zero signal
 	else if(para.signalflag==-1){
@@ -187,9 +175,9 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 	// calculate signal mean and variance
 	para.signalavrg=0;
 	para.signalvar=0;
-	for(int t= Tmax_learn; t < (Tmax_learn+Tmax_test); t++) {
-		para.signalavrg+=para.test(t-Tmax_learn);
-		para.signalvar+=para.test(t-Tmax_learn)*para.test(t-Tmax_learn);
+	for(int t= 0; t < Tmax_test; t++) {
+		para.signalavrg+=func_target(t*para.dt, para);
+		para.signalvar+=func_target(t*para.dt, para)*func_target(t*para.dt, para);
 	}
 	para.signalavrg=para.signalavrg/double(Tmax_test);
 	para.signalvar=para.signalvar/double(Tmax_test) - para.signalavrg*para.signalavrg;
@@ -238,7 +226,7 @@ void target_signal(netpara &para, std::ofstream &freq_file, std::ofstream &amp_f
 		if ((t % para.write_every)==0) json_traces["time_FT"].push_back(t*para.dt);
 	}
 
-	std::ofstream traces_file(para.folder+"traces.dat");		if (!traces_file) exit(EXIT_FAILURE);
+	std::ofstream traces_file(para.folder+"targets.dat");		if (!traces_file) exit(EXIT_FAILURE);
 	traces_file << std::setw(4) << json_traces << '\n';
 	traces_file.close();
 

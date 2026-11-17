@@ -108,26 +108,23 @@ void FTcomponents(FTcomp &Cmp, arma::mat &RATE, arma::vec &cleantol,netpara &par
 			arma::cx_vec tmp=FT.col(i);
 			arma::vec P=arma::abs(tmp.subvec( Nthalf/2-1, Nthalf-1 ));
 			P=P % P;
-			//~ if(i==0) std::cout << arma::size(FT) <<"\t" << Nthalf <<"\t" << arma::size(P) << std::endl;
 			double tailmean=arma::mean(P);
 			double tailstd=arma::stddev(P);
-			//~ cleantol(i)=tailmean+4*tailstd;		// remove < 4 times STD
 			cleantol(i)=tailmean+3*tailstd;		// remove < 3 times STD
-			//~ cleantol(i)=tailmean+1*tailstd;		// remove < 1 times STD
 		}
 	}
 
 	arma:: mat rr=arma::real(FT.t());
 	arma:: mat ii=arma::imag(FT.t());
 
-	if(para.learnflag<99 && writeflag==1) {
-		std::ofstream FT_real_file(para.folder+"FT_real_" + modeflag +".txt");		if (!FT_real_file) exit(EXIT_FAILURE);
-		rr.save(FT_real_file,arma::raw_ascii);
-		FT_real_file.close();
-		std::ofstream FT_imag_file(para.folder+"FT_imag_" + modeflag +".txt");		if (!FT_imag_file) exit(EXIT_FAILURE);
-		ii.save(FT_imag_file,arma::raw_ascii);
-		FT_imag_file.close();
-	}
+	//~ if(para.learnflag<99 && writeflag==1) {
+		//~ std::ofstream FT_real_file(para.folder+"FT_real_" + modeflag +".txt");		if (!FT_real_file) exit(EXIT_FAILURE);
+		//~ rr.save(FT_real_file,arma::raw_ascii);
+		//~ FT_real_file.close();
+		//~ std::ofstream FT_imag_file(para.folder+"FT_imag_" + modeflag +".txt");		if (!FT_imag_file) exit(EXIT_FAILURE);
+		//~ ii.save(FT_imag_file,arma::raw_ascii);
+		//~ FT_imag_file.close();
+	//~ }
 
 	Cmp.a0=rr.col(0)/2.0;
 	// find peaks at integer multiples of the baseline frequency
@@ -140,7 +137,6 @@ void FTcomponents(FTcomp &Cmp, arma::mat &RATE, arma::vec &cleantol,netpara &par
 		arma::uvec idx_loc(Nthalf);
 		emptyflag=1;
 		eps=eps_base;
-		//~ std::cout << j <<"\t" << fs <<"\t" << fs/double(FT_tsteps) <<"\t" << j*w-eps <<"\t" << j*w <<"\t" << j*w+eps << std::endl;
 		while(emptyflag==1){
 			for (int k = 0; k < Nthalf; k++) {
 				idx_loc(k)=( freqaxis(k)>=(j*w-eps) ) & ( freqaxis(k)<=(j*w+eps) );
@@ -149,7 +145,6 @@ void FTcomponents(FTcomp &Cmp, arma::mat &RATE, arma::vec &cleantol,netpara &par
 			if(tmp.is_empty()){
 				emptyflag=1;
 				eps=eps*1.01;
-				// std::cout << "is_empty" << std::endl;
 			}
 			else{
 				emptyflag=0;
@@ -209,25 +204,8 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 	int cleanflag;
 	arma::vec cleantol=arma::zeros<arma::vec>(N);
 
-	if(para.FMdyncleanflag==1) {
-		FTcomp Cmp_noise;
-		Cmp_noise.a0=arma::zeros<arma::vec>(N);
-		Cmp_noise.an=arma::zeros<arma::mat>(N,Ncomp_total);
-		Cmp_noise.bn=arma::zeros<arma::mat>(N,Ncomp_total);
-		arma::mat TMP=arma::zeros<arma::mat>(arma::size(RATE));
-		TMP.randn(arma::size(RATE));
-		arma::mat NOISE=RATE+TMP*para.sigmaLS;//*para.FACsigmaLS_ctx; // ADJUST THIS
-
-		writeflag=1; cleanflag=0;
-		FTcomponents(Cmp_noise, NOISE, cleantol, para, FT_tsteps, Ncomp_total,cleanflag,writeflag,modeflag+"_noise");
-
-		writeflag=1; cleanflag=1;
-		FTcomponents(Cmp, RATE, cleantol, para, FT_tsteps, Ncomp_total,cleanflag,writeflag,modeflag+"_cleaned");
-	}
-	else {
-		writeflag=1; cleanflag=0;
-		FTcomponents(Cmp, RATE, cleantol, para, FT_tsteps, Ncomp_total,cleanflag,writeflag,modeflag+"_cleaned");
-	}
+	writeflag=1; cleanflag=0;
+	FTcomponents(Cmp, RATE, cleantol, para, FT_tsteps, Ncomp_total,cleanflag,writeflag,modeflag+"_cleaned");
 
 	//	*************************
 	// clean up fourier components
@@ -323,7 +301,6 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 		Cmp.cond_total=calc_FT_cond(Cmp.S_signal_centered,1e-3);
 	}
 	else Cmp.cond_total=NAN;
-	//~ Cmp.cond_total=NAN;
 
 	//	*************************
 	// subspace angles between cos-part of signal-subspace and the rest

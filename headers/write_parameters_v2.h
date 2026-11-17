@@ -27,8 +27,6 @@ void write_parameters(nlohmann::json &json_parameters, netpara &para) {
 	json_parameters["alpha"].push_back(para.alpha);
 	json_parameters["amplitudes"].push_back(para.amps);
 	json_parameters["amplitudes_intf"].push_back(para.amps_intf);
-	json_parameters["BWfilter_order"].push_back(para.norder);
-	json_parameters["BWfilter_cutoff_factor"].push_back(para.cutoff);
 	json_parameters["DT"].push_back(para.DT);
 	json_parameters["DT_euler"].push_back(para.DT_euler);
 	json_parameters["dt"].push_back(para.dt);

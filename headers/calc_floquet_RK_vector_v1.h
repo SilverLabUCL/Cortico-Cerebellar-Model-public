@@ -116,7 +116,7 @@ int RK_Floquet_cortex_cereb_rhs_vector(double t, const double X[], double dX_dt[
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(nuGC);
 	}
 	else if(para.gocmodeflag==3){
@@ -331,7 +331,7 @@ int RK_Floquet_cortex_cereb_dyn_rhs_vector(double t, const double X[], double dX
 	for (int j=0; j<para.Nmf; j++) 	MF[j]=nuCx[para.Ncx_to_MF_idx[j]];
 
 	// Golgi cell
-	if(para.gocmodeflag==1 || para.gocmodeflag==2){
+	if(para.gocmodeflag==1){
 		GoC=arma::mean(nuGC);
 	}
 	else if(para.gocmodeflag==3){
@@ -475,11 +475,11 @@ int RK_Floquet_cortex_cereb_dyn_rhs_vector(double t, const double X[], double dX
 	return GSL_SUCCESS;
 }
 
-void calc_floquet_RK_vector(double XIN[], netpara &para, nlohmann::json &json_measures, std::ofstream &alg_steps_file) {
+void calc_floquet_RK_vector(double XIN[], netpara &para, nlohmann::json &json_measures, std::ofstream &log_file) {
 
 if(para.floquetflag==1){
-	if(para.algswitch==1)	alg_steps_file << "\t \t \t Calculate Floquet multipliers for ctx"<< std::endl;
-	else					alg_steps_file << "\t \t \t Calculate Floquet multipliers for ctx + cereb"<< std::endl;
+	if(para.algswitch==1)	log_file << "\t \t \t Calculate Floquet multipliers for ctx"<< std::endl;
+	else					log_file << "\t \t \t Calculate Floquet multipliers for ctx + cereb"<< std::endl;
 
 	para.inv_tau_distrb=1.0/para.tau_distrb;
 	para.inv_tauGC_distrb=1.0/para.tauGC_distrb;
@@ -665,7 +665,7 @@ if(para.floquetflag==1){
 	para.closedloop=para.floquetmodeflag;	// closed/open loop according to chosen parameter
 	para.testphaseflag=0;					// no noise
 	para.RKflag=1;							// Runke-Kutta integration
-	alg_steps_file << "\t \t \t FM computation phase" << "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
+	log_file << "\t \t \t FM computation phase" << "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 	for (int k = 0; k < para.N_FMperiods; k++) {
 		// integrate one period
 		gsl_odeiv2_driver_apply(FLOQdriver, &time, time + para.Tmax_FM*para.dt, X.data());
@@ -704,7 +704,7 @@ if(para.floquetflag==1){
 		v_perp /= arma::norm(v_perp);
 		std::copy(v_perp.begin(), v_perp.end(), X.data() + nnet);
 	}
-	alg_steps_file << "\t \t \t End of FM computation phase, T =  "<< para.N_FMperiods*(para.Tmax_FM)*para.dt << "\t Ttot =  "<< time << std::endl;
+	log_file << "\t \t \t End of FM computation phase, T =  "<< para.N_FMperiods*(para.Tmax_FM)*para.dt << "\t Ttot =  "<< time << std::endl;
 
 	double mu_max = std::exp(log_growth / para.N_FMperiods);
 	double LE_max = log_growth / (para.N_FMperiods*para.Tmax_FM*para.dt);

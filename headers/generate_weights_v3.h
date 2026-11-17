@@ -83,13 +83,11 @@ void generate_weights(netpara &para) {
 		}
 
 		bool ok = arma::chol(Lchol, RHO);
-		//~ std::cout << ok << std::endl;
 
 		// deal with non positive semi-definite matrices
 		if(ok==0){
 			nearestSPD(RHO);
 			ok = arma::chol(Lchol, RHO);
-			//~ std::cout << ok << std::endl;
 		}
 
 		for(int j= 0; j < para.Ncomp_intf+1; j++) {
@@ -103,11 +101,9 @@ void generate_weights(netpara &para) {
 		for(int i= 0; i < Ncx; i++) {
 			gsl_ran_multivariate_gaussian(para.r, mu, L, res);
 			for(int k= 0; k < para.Ncomp_intf+1; k++) {
-				//~ std::cout <<  gsl_vector_get(res,k) << '\t' ;
 				if(k==0)	para.Wfb[i]=gsl_vector_get(res,k);
 				else 		para.Wfb_interf.at(i,k-1)=gsl_vector_get(res,k);
 			}
-			//~ std::cout << std::endl;
 		}
 
 		gsl_vector_free (mu);
@@ -179,14 +175,7 @@ void generate_weights(netpara &para) {
 		// Golgi-cell to GC weights
 		//*******************************
 		para.Wgoc_distrb=arma::zeros<arma::vec>(para.Ngc);
-		if(para.gocmodeflag==2){
-			double kk=para.Wgoc*para.Wgoc/(para.Wgoc_SD*para.Wgoc_SD);
-			double theta_kk=para.Wgoc_SD*para.Wgoc_SD/para.Wgoc;
-			for (int i=0;i<Ngc;i++){
-				para.Wgoc_distrb[i]=gsl_ran_gamma(para.r, kk, theta_kk);
-			}
-		}
-		else if(para.gocmodeflag==1 || para.gocmodeflag==3){
+		if(para.gocmodeflag==1 || para.gocmodeflag==3){
 			for (int i=0;i<Ngc;i++){
 				para.Wgoc_distrb[i]=para.Wgoc;
 			}

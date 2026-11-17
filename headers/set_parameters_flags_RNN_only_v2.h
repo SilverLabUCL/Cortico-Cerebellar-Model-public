@@ -22,6 +22,9 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.rho_Wfb13=1;			//
 	para.write_every=20;		// read out every nth time step
 
+	para.tau_avrg=0.01;				// average and standard deviation of RNN units integration time constants
+	para.tau_std=0.01;
+
 	para.delta_eta=0.0025;		// initial learning rate for DELTA rule
 	para.delta_r2_reg=1e-6;		// norm regularisation for DELTA rule
 
@@ -32,13 +35,12 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.sigAmp_intf=1.0;	// global amplitude multiplier (interference signal)
 
 	para.amps={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};	// all amplitudes of signal / interference signals
-	//~ para.amps=para.amps*sqrt(2);
 	para.amps_intf={0.0,1.0,1.0,1.0,1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
 	para.phases={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};		// all phases of signal / interference signals
 	para.phases_intf={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 
-	// target signal: 'quadruple_sine', 'accordion', 'sine', 'cosine_fixed', 'lorenz', 'square_wave', 'sawtooth_wave', 'staircase_wave', 'test_signal' or 'zero_signal'
+	// target signal: 'quadruple_sine', 'sine', 'cosine_fixed', 'test_signal' or 'zero_signal'
 	para.signaltype="cosine_fixed";
 	// scale noise with firing rate: 'constant', 'proportional', 'rate' or 'none'
 	para.noisescaling="none";
@@ -60,57 +62,72 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.floquetmode="open";
 	// write readout unit output to file
 	para.ROwrite="OFF";
-	// dynamic cleanup of Fourier modes
-	para.FMdynclean="OFF";
 
 	try {
-		po::options_description desc("Allowed options", 240);
-		desc.add_options()
-			("help", "produce help message")
-			("signaltype", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.signaltype), "target signal: 'quadruple_sine', 'accordion', 'cosine_fixed'... ")
-			("learnmode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learnmode), "learn mode: 'cortex', 'none', 'repeat' or 'scan_...' ")
-			("LRule", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learningrule), "learning rule: 'RLS', 'LS', 'RR', 'PINV' or 'DELTA' ")
+
+		po::options_description general("General options", 240);
+		general.add_options()
+			("help", "Produce help message")
+			("seed", po::value<int>(&para.seed)->default_value(para.seed), "random number seed")
+			("dt", po::value<double>(&para.DT)->default_value(para.DT), "integration time step")
+			("dt_euler", po::value<double>(&para.DT_euler)->default_value(para.DT_euler), "integration time step of euler test-phase")
+			("Nreal", po::value<int>(&para.Nreal)->default_value(para.Nreal), "number of network realisations")
 			("noise", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.noisescaling), "noise (scaling with firing rate): 'constant', 'proportional' or 'none' ")
-			("loop_test", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.loop_test), "loop type during test-phase: 'closed' or 'open'")
-			("activation_function", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.activation_function), "activation function of RNN units: 'tanh' or 'linear' ")
-			("interference_signal", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.interference_signal), "add interference signal: 'ON' or 'OFF' ")
-			("tau_mode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.tau_mode), "distribute RNN taus: 'ON' or 'OFF' ")
 			("Floquet", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.floquet), "calculate Floquet multipiers: 'ON' or 'OFF' ")
 			("loop_Floquet_mode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.floquetmode), "Floquet mode: 'closed' or 'open' ")
-			("ROwrite", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.ROwrite), "write reaout to file: 'ON' or 'OFF' ")
-			("FMdynclean", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.FMdynclean), "dynamically clean Fourier spectrum: 'ON' or 'OFF' ")
-			("Ncx", po::value<int>(&para.Ncx)->default_value(para.Ncx), "number of RNN units")
+			("write_every", po::value<int>(&para.write_every)->default_value(para.write_every), "read-out sampling rate (every xth time-step)")
+			("ROwrite", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.ROwrite), "write readout to file: 'ON' or 'OFF' ")
+			("rho_Wfb12", po::value<double>(&para.rho_Wfb12)->default_value(para.rho_Wfb12), "correlation rho_Wfb12")
+			("rho_Wfb13", po::value<double>(&para.rho_Wfb13)->default_value(para.rho_Wfb13), "correlation rho_Wfb13")
+			("Npara", po::value<int>(&para.Npara)->default_value(para.Npara), "number of parameter steps")
+			("N_FMperiods", po::value<int>(&para.N_FMperiods)->default_value(para.N_FMperiods), "number of periods for calculation of Floquet multiplier")
+			("INT_delta_abs", po::value<double>(&para.INT_delta_abs)->default_value(para.INT_delta_abs), "target absolute error for numerical integration")
+			("INT_delta_rel", po::value<double>(&para.INT_delta_rel)->default_value(para.INT_delta_rel), "target relative error for numerical integration")
+		;
+
+		po::options_description Input("Input/target signal(s) options", 240);
+		Input.add_options()
+			("signaltype", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.signaltype), "target signal: 'quadruple_sine', 'cosine_fixed'... ")
+			("interference_signal", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.interference_signal), "add interference signal: 'ON', 'OFF' or 'GCs' ")
+			("lambda", po::value<double>(&para.lambda)->default_value(para.lambda), "signal fundamental frequency")
 			("Ncomp", po::value<int>(&para.Ncomp)->default_value(para.Ncomp), "number of signal frequency components")
 			("Ncomp_intf", po::value<int>(&para.Ncomp_intf)->default_value(para.Ncomp_intf), "number of interference signal frequency components")
+			("sigAmp", po::value<double>(&para.sigAmp)->default_value(para.sigAmp), "global target signal multiplier")
+			("sigAmp_intf", po::value<double>(&para.sigAmp_intf)->default_value(para.sigAmp_intf), "global interference signal multiplier")
+		;
+
+		po::options_description RNN("RNN options", 240);
+		RNN.add_options()
+			("Ncx", po::value<int>(&para.Ncx)->default_value(para.Ncx), "number of RNN units")
 			("g", po::value<double>(&para.g)->default_value(para.g), "reccurent weight parameter")
-			("lambda", po::value<double>(&para.lambda)->default_value(para.lambda), "signal fundamental frequency")
+			("tau_mode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.tau_mode), "distribute RNN taus: 'ON' or 'OFF' ")
+			("tau_avrg", po::value<double>(&para.tau_avrg)->default_value(para.tau_avrg), "average RNN unit time constant")
+			("tau_std", po::value<double>(&para.tau_std)->default_value(para.tau_std), "std of RNN unit time constants")
+			("activation_function", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.activation_function), "activation function of RNN units: 'tanh' or 'linear' ")
+			("sigmaN", po::value<double>(&para.sigmaN)->default_value(para.sigmaN), "RNN unit noise")
+		;
+
+		po::options_description Learning("Learning and testing options", 240);
+		Learning.add_options()
+			("learnmode", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learnmode), "learn mode: 'cortex', 'cerebellum', 'none', 'repeat' or 'scan_...' ")
+			("LRule", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.learningrule), "learning rule: 'RLS', 'LS', 'RR', 'PINV' or 'DELTA' ")
+			("loop_test", po::value< std::vector<std::string> >()->default_value(std::vector<std::string>(), para.loop_test), "loop type during test-phase: 'closed' or 'open'")
 			("T_learn", po::value<double>(&para.duration_learn)->default_value(para.duration_learn), "length of learning phase (i.e. number of periods)")
 			("T_test", po::value<double>(&para.duration_test)->default_value(para.duration_test), "length of test phase  (i.e. number of periods)")
 			("sigmaLS", po::value<double>(&para.sigmaLS)->default_value(para.sigmaLS), "regularisation for LS or RR")
-			("sigmaN", po::value<double>(&para.sigmaN)->default_value(para.sigmaN), "RNN unit noise")
-			("sigAmp", po::value<double>(&para.sigAmp)->default_value(para.sigAmp), "global target signal multiplier")
-			("sigAmp_intf", po::value<double>(&para.sigAmp_intf)->default_value(para.sigAmp_intf), "global interference signal multiplier")
-			("rho_Wfb12", po::value<double>(&para.rho_Wfb12)->default_value(para.rho_Wfb12), "correlation rho_Wfb12")
-			("rho_Wfb13", po::value<double>(&para.rho_Wfb13)->default_value(para.rho_Wfb13), "correlation rho_Wfb13")
-			("Nreal", po::value<int>(&para.Nreal)->default_value(para.Nreal), "number of network realisations")
-			("Npara", po::value<int>(&para.Npara)->default_value(para.Npara), "number of parameter steps")
-			("N_FMperiods", po::value<int>(&para.N_FMperiods)->default_value(para.N_FMperiods), "number of periods for calculation of Floquet multiplier")
-			("seed", po::value<int>(&para.seed)->default_value(para.seed), "random number seed")
-			("write_every", po::value<int>(&para.write_every)->default_value(para.write_every), "read-out sampling rate (every xth time-step)")
-			("dt", po::value<double>(&para.DT)->default_value(para.DT), "integration time step")
-			("dt_euler", po::value<double>(&para.DT_euler)->default_value(para.DT_euler), "integration time step of euler test-phase")
 			("delta_eta", po::value<double>(&para.delta_eta)->default_value(para.delta_eta), "initial learning rate for DELTA rule")
-			("INT_delta_abs", po::value<double>(&para.INT_delta_abs)->default_value(para.INT_delta_abs), "target absolute error for numerical integration")
-			("INT_delta_rel", po::value<double>(&para.INT_delta_rel)->default_value(para.INT_delta_rel), "target relative error for numerical integration")
-
 		;
 
+		// Combine all descriptions
+		po::options_description alldesc("Allowed options", 240);
+		alldesc.add(general).add(Input).add(Learning).add(RNN);
+
 		po::variables_map vm;
-		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::store(po::parse_command_line(argc, argv, alldesc), vm);
 		po::notify(vm);
 
 		if (vm.count("help")) {
-			std::cout << desc << "\n";
+			std::cout << alldesc << "\n";
 			return 1;
 		}
 		std::vector<std::string> tmp;
@@ -158,10 +175,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 			tmp=vm["ROwrite"].as< std::vector<std::string> >();
 			para.ROwrite= tmp[0];
 		}
-		if (vm["FMdynclean"].defaulted()==0)  {
-			tmp=vm["FMdynclean"].as< std::vector<std::string> >();
-			para.FMdynclean= tmp[0];
-		}
 	}
 	catch(std::exception& e) {
 		std::cerr << "error: " << e.what() << std::endl;
@@ -205,28 +218,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.rho_Wfb.ones(para.Ncomp_intf+1,para.Ncomp_intf+1);
 	para.rho_Wfb.ones(para.Ncomp_intf+1,para.Ncomp_intf+1);
 
-	para.amps.ones(para.Ncomp);
-	para.amps_intf.ones(para.Ncomp_intf);
-	para.amps_intf(0)=0.0;
-	para.phases.zeros(para.Ncomp);
-	para.phases_intf.zeros(para.Ncomp_intf);
-
-	//~ para.rho_Wfb={ 	{1, 1, 1}, 				// 3x3 	for N_intf=2
-					//~ {1, 1, 1},
-					//~ {1, 1, 1} };
-
-	//~ para.rho_Wfb={ 	{1, 1, 1, 1}, 			// 4x4	for N_intf=3
-					//~ {1, 1, 1, 1},
-					//~ {1, 1, 1, 1},
-					//~ {1, 1, 1, 1} };
-
-	//~ para.rho_Wfb={ 	{1, 1, 1, 1, 1}, 		// 5x5
-					//~ {1, 1, 1, 1, 1},
-					//~ {1, 1, 1, 1, 1},
-					//~ {1, 1, 1, 1, 1},
-					//~ {1, 1, 1, 1, 1} };
-	//~ para.rho_Wfb12=0.5;
-	//~ para.rho_Wfb12=para.rho_Wfb(0,2);
 	if(para.Ncomp_intf>1){
 		para.rho_Wfb(0,2)=para.rho_Wfb12;
 		para.rho_Wfb(2,0)=para.rho_Wfb12;
@@ -236,13 +227,11 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 		para.rho_Wfb(3,0)=para.rho_Wfb13;
 	}
 
-	para.tau_avrg=0.01;		// average and standard deviation of integration time constant
-	para.tau_std=0.01;
 	para.tauRNNcutoff=0.003;		// smallest permitted tau
 
 	para.pcon=0.1;				// connection probability between cortical units
 
-	para.phi1=0.0;			// phase of 1st cosine/sine component  	//~ para.phi1=3*M_PI/4.0;
+	para.phi1=0.0;			// phase of 1st cosine/sine component
 	para.ampmod=0;			// modification of 1st & 2nd cosine components
 
 	para.alpha=1;			// regularisation term of P matrix (for RLS)
@@ -281,7 +270,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	if 		(para.noisescaling == "none") 			para.noiseflag=-1;
     else if (para.noisescaling == "constant") 		para.noiseflag=0;
     else if (para.noisescaling == "proportional") 	para.noiseflag=1;
-    //~ else if (para.noisescaling == "rate") 			para.noiseflag=2;
     else {std::cerr <<"Bad noisescaling string. \n";exit(EXIT_FAILURE);}
 
 	if 		(para.learningrule == "RLS") 	para.LRflag=0;
@@ -314,10 +302,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	if (para.ROwrite == "OFF") 						para.ROwriteflag=0;
     else if (para.ROwrite == "ON") 					para.ROwriteflag=1;
 	else {std::cerr <<"Bad ROwrite string. \n";exit(EXIT_FAILURE);}
-
-	if (para.FMdynclean == "OFF") 					para.FMdyncleanflag=0;
-    else if (para.FMdynclean == "ON") 				para.FMdyncleanflag=1;
-	else {std::cerr <<"Bad FMdynclean string. \n";exit(EXIT_FAILURE);}
 
 	if (para.loop_test == "open") 					para.loop_test_flag=0;
     else if (para.loop_test == "closed") 			para.loop_test_flag=1;
@@ -383,7 +367,6 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	json_flags["fcodingflag"] = para.fcodingflag;
 	json_flags["floquetflag"] = para.floquetflag;
 	json_flags["floquetmodeflag"] = para.floquetmodeflag;
-	json_flags["FMdyncleanflag"] = para.FMdyncleanflag;
 	json_flags["gainflag"] = para.gainflag;
 	json_flags["interferenceflag"] = para.intrfflag;
 	json_flags["loopflag"] = para.loop_learning_flag;
@@ -391,6 +374,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	json_flags["learnflag"] = para.learnflag;
 	json_flags["LRflag"] = para.LRflag;
 	json_flags["noiseflag"] = para.noiseflag;
+	json_flags["ROwriteflag"] = para.ROwriteflag;
 	json_flags["signalflag"] = para.signalflag;
 	json_flags["simplemapflag"] = para.simplemapflag;
 	json_flags["taudistrbflag"] = para.taudistrbflag;
@@ -404,6 +388,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	arma::arma_version ver;
 	std::cout << "Version: "<< para.version << std::endl;
 	std::cout << "ARMA version: "<< ver.as_string() << std::endl;
+	std::cout << "Using Boost version " << BOOST_VERSION / 100000 << "." << BOOST_VERSION / 100 % 1000 << "."<< BOOST_VERSION % 100<< std::endl;
 	std::cout <<"----------------------------------------------------------------" << std::endl;
 	std::cout << std::endl;
 
@@ -413,7 +398,10 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	std::cout << "noise scaling: " << para.noisescaling << " with sig_N = " << para.sigmaN <<std::endl;
 	std::cout << std::endl;
 
-	if(para.taudistrbflag==1){
+	if(para.taudistrbflag==0){
+		std::cout << "RNN time-constants set to " << para.tau_avrg << std::endl;
+	}
+	else if(para.taudistrbflag==1){
 		std::cout << "Drawing RNN time-constants from Gamma distribution with avrg " << para.tau_avrg << " and std " << para.tau_std<< std::endl;
 	}
 
@@ -427,16 +415,16 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	}
 
 	std::cout <<"----------------------------------------------------------------" << std::endl;
-	std::cout << "target signal: " << para.signaltype <<  " with Ncomp = " << para.Ncomp << ", lambda = "<< para.lambda << " and "<< std::endl;
-	std::cout <<"Amp = " << arma::trans(para.amps.rows(0, para.Ncomp-1));
-	std::cout <<"Phi = " << arma::trans(para.phases.rows(0, para.Ncomp-1)) << std::endl;
+	std::cout << "target signal: " << para.signaltype <<  " with Ncomp = " << para.Ncomp << ", lambda = "<< para.lambda << std::endl;
+	//~ std::cout <<"Amp = " << arma::trans(para.amps.rows(0, para.Ncomp-1));
+	//~ std::cout <<"Phi = " << arma::trans(para.phases.rows(0, para.Ncomp-1)) << std::endl;
 	if(para.intrfflag>0){
 		if(para.intrfflag==1){
 			std::cout << "adding interference signal to RNN with Ncomp_interf = " << para.Ncomp_intf << ", sigAmp_interf = " << para.sigAmp_intf << ", rho = " << std::endl;
 		}
 		std::cout<< para.rho_Wfb << std::endl;
-		std::cout <<"Amp_interf = " << arma::trans(para.amps_intf.rows(0, para.Ncomp_intf-1));
-		std::cout <<"Phi_interf = " << arma::trans(para.phases_intf.rows(0, para.Ncomp_intf-1));
+		//~ std::cout <<"Amp_interf = " << arma::trans(para.amps_intf.rows(0, para.Ncomp_intf-1));
+		//~ std::cout <<"Phi_interf = " << arma::trans(para.phases_intf.rows(0, para.Ncomp_intf-1));
 	}
 	std::cout <<"----------------------------------------------------------------" << std::endl;
 

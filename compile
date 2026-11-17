@@ -1,5 +1,5 @@
 #!/bin/bash
 
-g++ -O3 -o RNN+FFL.out RNN+FFL.cpp -lgsl -lgslcblas -lm -larmadillo -lboost_program_options -fopenmp -lnlopt
+g++ -O3 -o RNN+FFL.out RNN+FFL.cpp -lgsl -lgslcblas -lm -larmadillo -lboost_program_options -fopenmp
 
-g++ -O3 -o RNN_only.out RNN_only.cpp -lgsl -lgslcblas -lm -larmadillo -lboost_program_options -fopenmp -lnlopt
+g++ -O3 -o RNN_only.out RNN_only.cpp -lgsl -lgslcblas -lm -larmadillo -lboost_program_options -fopenmp
