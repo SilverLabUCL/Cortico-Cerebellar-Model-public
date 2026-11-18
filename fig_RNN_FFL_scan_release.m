@@ -1,11 +1,11 @@
-function [CEREB, X]=fig_RNN_FFL_scan_release(data,varargin)
+function [FFL, X]=fig_RNN_FFL_scan_release(data,varargin)
 
-trainflag=0; logYflag=0; sparseXflag=0; traceflag=0; statsflag=0; paraflag=0; gainflag=0; 
+trainflag=0; logYflag=0; traceflag=0; statsflag=0; paraflag=0; gainflag=0; 
 thresflag=0; medianflag=0; RMSEflag=0;floquetflag=0; floquetfracflag=0; ratioflag=0; dimflag=0;
 Wnormflag=0; condflag=0; Xangleflag=0;
-legendflag=0; ERRoutlierflag=0; sNflag=0; anglesflag=0;angles_signal_noiseflag=0;angles_noise_noiseflag=0;normflag=0;normnoise_flag=0;
+ERRoutlierflag=0; sNflag=0; anglesflag=0;angles_signal_noiseflag=0;angles_noise_noiseflag=0;normflag=0;normnoise_flag=0;
 saveflag=0;xlogflag=0;ERRdistrbflag=0;pranglesflag=0;stabmarginflag=0;Rflag=0;indvsineprodflag=0;fullsineprodflag=0;sparsestatsflag=0;
-compactflag=0;labelsflag=0;markeroffflag=0;
+compactflag=0;markeroffflag=0;
 filenamestr='';
 Xanglestr='cereb';
 Xangleidx=[2,1];
@@ -15,7 +15,6 @@ Nang=12;
 maxprang=60;
 
 %% read command line options
-% varargin=varargin{1};
 argidx = 1;
 while argidx<=length(varargin)
     if strcmpi( varargin{argidx}, 'show traces' ) || strcmpi( varargin{argidx}, 'traces' )
@@ -29,9 +28,6 @@ while argidx<=length(varargin)
         logYflag = 1;
         logYlims=varargin{argidx+1};
         argidx=argidx+2;
-    elseif strcmpi( varargin{argidx}, 'sparse axis' )
-        sparseXflag = 1;
-        argidx=argidx+1;
     elseif strcmpi( varargin{argidx}, 'show sparsity stats' ) || strcmpi( varargin{argidx}, 'show sparsity' ) ||...
             strcmpi( varargin{argidx}, 'sparsity' )
         sparsestatsflag = 1;
@@ -111,9 +107,6 @@ while argidx<=length(varargin)
             strcmpi( varargin{argidx}, 'sine product') || strcmpi( varargin{argidx}, 'sineproduct')
         fullsineprodflag = 1;
         argidx=argidx+1;
-    elseif strcmpi( varargin{argidx}, 'show legends' ) || strcmpi( varargin{argidx}, 'show legend' ) || strcmpi( varargin{argidx}, 'legend')
-        legendflag = 1;
-        argidx=argidx+1;
     elseif strcmpi( varargin{argidx}, 'show ERROR distributions' ) || strcmpi( varargin{argidx}, 'ERROR distributions' ) ||...
             strcmpi( varargin{argidx}, 'ERROR distrb')
         ERRdistrbflag = 1;
@@ -137,9 +130,6 @@ while argidx<=length(varargin)
         argidx=argidx+2;
     elseif strcmpi( varargin{argidx}, 'compact' )
         compactflag = 1;
-        argidx=argidx+1;
-    elseif strcmpi( varargin{argidx}, 'show labels' ) || strcmpi( varargin{argidx}, 'labels' )
-        labelsflag = 1;
         argidx=argidx+1;
     elseif strcmpi( varargin{argidx}, 'clean outliers' ) || strcmpi( varargin{argidx}, 'clean ERR outliers' )
         ERRoutlierflag = 1;
@@ -305,7 +295,7 @@ if(saveflag==1)
 end
 
 %% extract learning performance, measures, stats etc.
-CEREB=extract_stats_v3 (parameters,Npara,data,'cereb',outlthr);
+FFL=extract_stats_v3 (parameters,Npara,data,'cereb',outlthr);
 
 %% create labels for angles
 labels_str=strings((2*Ncomp+8),(2*Ncomp+8));
@@ -327,7 +317,6 @@ for i=1:(2*Ncomp+10)
         labels_str(j,i)=labels_str(i,j);
     end
 end
-CEREB.labels_str=labels_str;
 %% uses angles as x-axis
 if(Xangleflag==1)
     if(Xangleidx(2)>Xangleidx(1))
@@ -344,36 +333,32 @@ if(Xangleflag==1)
     % Xstr='angle (v^2_+, z_+)';
 
     if(strcmpi(Xanglestr,'cereb'))
-        X=CEREB.ANGLES_avrg(:,Xangleidx(1)+1,Xangleidx(2)+1);
+        X=FFL.ANGLES_avrg(:,Xangleidx(1)+1,Xangleidx(2)+1);
     end
     Xstr=['Angle ', labels_str{Xangleidx(1)+1,Xangleidx(2)+1}];
 
     xlogflag=0;
-    sparseXflag=0;
     sNflag=0;
 end
 
 %% estimate stability margins using error/EV/Floquet
 cmp = get(groot,'DefaultAxesColorOrder');
-ctxcolour=cmp(1,:);
 cerebcolour=cmp(2,:);
 suppcolour=cmp(5,:);
 xlinecol=cerebcolour;
-xlinecol_ctx=ctxcolour;
 xlinestyle='--';
 xintersect=[];
-xintersect_ctx=[];
 
 if(stabmarginflag==1)
     if(xlinecritflag==1)
-        xintersect = findIntersect(X,CEREB.RMSE_test,xlinecutoff*ones(numel(X),1),xlogflag,1);
+        xintersect = findIntersect(X,FFL.RMSE_test,xlinecutoff*ones(numel(X),1),xlogflag,1);
     elseif(xlinecritflag==2)
-        xintersect = findIntersect(X,CEREB.FLOQUET_avrg,xlinecutoff*ones(numel(X),1),xlogflag,1);
+        xintersect = findIntersect(X,FFL.FLOQUET_avrg,xlinecutoff*ones(numel(X),1),xlogflag,1);
     elseif(xlinecritflag==4)
-        xintersect = findIntersect(X,CEREB.FLOQUET_median,xlinecutoff*ones(numel(X),1),xlogflag,1);
+        xintersect = findIntersect(X,FFL.FLOQUET_median,xlinecutoff*ones(numel(X),1),xlogflag,1);
         xlinecol=cerebcolour*0.7;
     elseif(xlinecritflag==5)
-        xintersect = findIntersect(X,CEREB.FLOQUET_frac,xlinecutoff*ones(numel(X),1),xlogflag,0);
+        xintersect = findIntersect(X,FFL.FLOQUET_frac,xlinecutoff*ones(numel(X),1),xlogflag,0);
     end
 end
 
@@ -416,21 +401,16 @@ end
 % plot parameters
 plotpara.Ncomp=Ncomp;
 plotpara.xlogflag=xlogflag;
-plotpara.sparseXflag=sparseXflag;
 plotpara.sNflag=sNflag;
 plotpara.Xstr=Xstr;
 plotpara.FS=FS;
 plotpara.LW=LW;
 plotpara.MS=MS;
-plotpara.ctxcolour=ctxcolour;
 plotpara.cerebcolour=cerebcolour;
 plotpara.learnflag=learnflag;
 plotpara.stabmarginflag=stabmarginflag;
 plotpara.xintersect=xintersect;
-plotpara.xintersect_ctx=xintersect_ctx;
-plotpara.labelsflag=labelsflag;
 plotpara.xlinecol=xlinecol;
-plotpara.xlinecol_ctx=xlinecol_ctx;
 plotpara.xlinestyle=xlinestyle;
 
 if(ERRdistrbflag)
@@ -447,13 +427,9 @@ if(Nflags>0)
     if(RMSEflag==1)
         nexttile;
         hold on;
-        plot(X,CEREB.RMSE_test,'o-','Markerfacecolor',cerebcolour,'color',cerebcolour);
+        plot(X,FFL.RMSE_test,'o-','Markerfacecolor',cerebcolour,'color',cerebcolour);
         if(medianflag)
-            plot(X,CEREB.RMSE_median_test,':','color',cerebcolour);
-        else
-            if(legendflag)
-                legend('RNN+FFL','Location','Best');
-            end
+            plot(X,FFL.RMSE_median_test,':','color',cerebcolour);
         end
 
         ylabel('Test error (RMSE)','FontSize',FS);
@@ -470,7 +446,7 @@ if(Nflags>0)
     if(trainflag)
         nexttile;
         hold on;
-        errorbar(X,CEREB.RMSE_train,CEREB.RMSE_SD_train,'o-','Markerfacecolor',cerebcolour,'color',cerebcolour);
+        errorbar(X,FFL.RMSE_train,FFL.RMSE_SD_train,'o-','Markerfacecolor',cerebcolour,'color',cerebcolour);
         ylabel('Training error','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
         if(logYflag)
@@ -480,44 +456,36 @@ if(Nflags>0)
 
     if(statsflag)
         nexttile;
-        % 1hctx_mu 2hctx_sig 3Ctx_mu 4Ctx_sig 5hgc_mu 6hgc_sig 7GC_mu 8GC_sig 9f
         hold on;
-        errorbar(X,CEREB.STATS_avrg.nucx_std,CEREB.STATS_std.nucx_std,'o-','Markerfacecolor',ctxcolour,'color',ctxcolour);
-        errorbar(X,CEREB.STATS_avrg.gc_std,CEREB.STATS_std.gc_std,'o--','Markerfacecolor',cerebcolour,'color',cerebcolour);
-        errorbar(X,CEREB.STATS_avrg.gc_mean,CEREB.STATS_std.gc_mean,'o:','Markerfacecolor',cerebcolour*0.5,'color',cerebcolour*0.5);
-        if(any("gc_pop_cv" == string(CEREB.STATS_avrg.Properties.VariableNames)))
-            errorbar(X,CEREB.STATS_avrg.gc_pop_cv,CEREB.STATS_std.gc_pop_cv,'o-','Markerfacecolor',suppcolour,'color',suppcolour);
+        errorbar(X,FFL.STATS_avrg.gc_std,FFL.STATS_std.gc_std,'o--','Markerfacecolor',cerebcolour,'color',cerebcolour);
+        errorbar(X,FFL.STATS_avrg.gc_mean,FFL.STATS_std.gc_mean,'o:','Markerfacecolor',cerebcolour*0.5,'color',cerebcolour*0.5);
+        if(any("gc_pop_cv" == string(FFL.STATS_avrg.Properties.VariableNames)))
+            errorbar(X,FFL.STATS_avrg.gc_pop_cv,FFL.STATS_std.gc_pop_cv,'o-','Markerfacecolor',suppcolour,'color',suppcolour);
         end
         ylabel('stats','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
         ylim([0 Inf]);
-        if(legendflag)
-            legend('\sigma_{Ctx}','\sigma_{GC}','\mu_{GC}','Location','Best');
-        end
     end
 
     if(sparsestatsflag)
         nexttile;
         hold on;
-        if(any("f_max" == string(CEREB.STATS_avrg.Properties.VariableNames)))
-            errorbar(X,CEREB.STATS_avrg.f_mean,CEREB.STATS_avrg.f_std,'-','Color',cmp(4,:));
-            plot(X,CEREB.STATS_avrg.f_max,'--','Color',cmp(4,:));
-            plot(X,CEREB.STATS_avrg.f_min,'--','Color',cmp(4,:));
+        if(any("f_max" == string(FFL.STATS_avrg.Properties.VariableNames)))
+            errorbar(X,FFL.STATS_avrg.f_mean,FFL.STATS_avrg.f_std,'-','Color',cmp(4,:));
+            plot(X,FFL.STATS_avrg.f_max,'--','Color',cmp(4,:));
+            plot(X,FFL.STATS_avrg.f_min,'--','Color',cmp(4,:));
         end
         ylim([0 1]);
         ylabel('f_{lt}','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
         title('GC lifetime sparsity'); ax = gca; ax.TitleFontSizeMultiplier = 0.8;
-        if(legendflag)
-            legend('f_lt','Location','Best');
-        end
 
         nexttile;
         hold on;
-        if(any("fpop_max" == string(CEREB.STATS_avrg.Properties.VariableNames)))
-            errorbar(X,CEREB.STATS_avrg.fpop_mean,CEREB.STATS_avrg.fpop_std,'-','Color',cmp(5,:));
-            plot(X,CEREB.STATS_avrg.fpop_max,'--','Color',cmp(5,:));
-            plot(X,CEREB.STATS_avrg.fpop_min,'--','Color',cmp(5,:));
+        if(any("fpop_max" == string(FFL.STATS_avrg.Properties.VariableNames)))
+            errorbar(X,FFL.STATS_avrg.fpop_mean,FFL.STATS_avrg.fpop_std,'-','Color',cmp(5,:));
+            plot(X,FFL.STATS_avrg.fpop_max,'--','Color',cmp(5,:));
+            plot(X,FFL.STATS_avrg.fpop_min,'--','Color',cmp(5,:));
         end
         ylim([0 1]);
         ylabel('f_{pop}','FontSize',FS);
@@ -527,7 +495,7 @@ if(Nflags>0)
 
     if(gainflag)
         nexttile;
-        errorbar(X,CEREB.STATS_avrg.gain_mean,CEREB.STATS_std.gain_mean,'o-','Markerfacecolor',suppcolour,'color',suppcolour);
+        errorbar(X,FFL.STATS_avrg.gain_mean,FFL.STATS_std.gain_mean,'o-','Markerfacecolor',suppcolour,'color',suppcolour);
         ylabel('Gain','FontSize',FS);
         set(gca, 'yScale', 'log');
         % ylim([]);
@@ -536,30 +504,30 @@ if(Nflags>0)
 
     if(thresflag)
         nexttile;
-        errorbar(X,CEREB.STATS_avrg.thres_mean,CEREB.STATS_std.thres_mean,'o-','Markerfacecolor',cerebcolour,'color',suppcolour);
+        errorbar(X,FFL.STATS_avrg.thres_mean,FFL.STATS_std.thres_mean,'o-','Markerfacecolor',cerebcolour,'color',suppcolour);
         ylabel('Avrg. Thr','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
     end
 
     if(anglesflag)
         nexttile;
-        plot_angles(X,CEREB.ANGLES_avrg,labels_str,plotpara,cerebcolour,'Task-relevant',Nang,'mode','signal');
+        plot_angles(X,FFL.ANGLES_avrg,plotpara,cerebcolour,'Task-relevant',Nang,'mode','signal');
     end
 
     if(angles_signal_noiseflag)
         nexttile;
-        plot_angles(X,CEREB.ANGLES_avrg,labels_str,plotpara,cerebcolour,'Task-irrelevant-to-task-relevant',Nang,'mode','signal noise');
+        plot_angles(X,FFL.ANGLES_avrg,plotpara,cerebcolour,'Task-irrelevant-to-task-relevant',Nang,'mode','signal noise');
 
     end
 
     if(angles_noise_noiseflag)
         nexttile;
-        plot_angles(X,CEREB.ANGLES_avrg,labels_str,plotpara,cerebcolour,'Task-irrelevant',Nang,'mode','noise noise');
+        plot_angles(X,FFL.ANGLES_avrg,plotpara,cerebcolour,'Task-irrelevant',Nang,'mode','noise noise');
 
     end
 
     if(Rflag)
-        plot_R(X,CEREB.R_avrg,labels_str,plotpara,cerebcolour);
+        plot_R(X,FFL.R_avrg,plotpara,cerebcolour);
     end
 
     if(normflag)
@@ -568,13 +536,10 @@ if(Nflags>0)
         hold on;
         idx=1:2:(2*Ncomp);
         % plot(X,CEREB.NORMS_avrg(:,idx+1),'o-','Color',[cerebcolour,0.3]);
-        plot(X,mean(CEREB.NORMS_avrg(:,idx+1),2),'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,mean(FFL.NORMS_avrg(:,idx+1),2),'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
         idx=1:2:(2*Ncomp);
         for k=idx
-            [normmax_cereb(k), maxidx_cereb]=max(CEREB.NORMS_avrg(:,k+1)); %#ok<AGROW>
-            if(labelsflag==1)
-                text(X(maxidx_cereb),normmax_cereb(k),labels_str(k+1,1),'Color',cerebcolour);
-            end
+            [normmax_cereb(k)]=max(FFL.NORMS_avrg(:,k+1)); %#ok<AGROW>
         end
         normmax=max(normmax_cereb);
         if(normmax<1)
@@ -584,7 +549,6 @@ if(Nflags>0)
         ylim([-Inf normmax*1.05]);
         ylabel('Norm (a.u.)','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
-        % title('Signal'); ax = gca; ax.TitleFontSizeMultiplier = 0.8;
         if(normnoise_flag)
             linkaxes(axnorm,'y');
         end
@@ -596,20 +560,15 @@ if(Nflags>0)
         axnorm(ii)=nexttile;
         hold on;
         maxidx=(2*Ncomp)+Nang;
-        if(maxidx>size(CEREB.NORMS_avrg,2))
-            maxidx=size(CEREB.NORMS_avrg,2)-1;
+        if(maxidx>size(FFL.NORMS_avrg,2))
+            maxidx=size(FFL.NORMS_avrg,2)-1;
         end
         idx=[2:2:(2*Ncomp) (2*Ncomp+1):maxidx];
         for i=1:length(idx)
             if(idx(i)<=(2*Ncomp))
-                plot(X,CEREB.NORMS_avrg(:,idx(i)+1),'--','Color',cerebcolour);
+                plot(X,FFL.NORMS_avrg(:,idx(i)+1),'--','Color',cerebcolour);
             else
-                plot(X,CEREB.NORMS_avrg(:,idx(i)+1),'-','Color',cerebcolour);
-            end
-        end
-        if(labelsflag==1)
-            for k=idx
-                text(X(end),CEREB.NORMS_avrg(end,k+1),labels_str(k+1,1),'Color',cerebcolour);
+                plot(X,FFL.NORMS_avrg(:,idx(i)+1),'-','Color',cerebcolour);
             end
         end
         % plot(X,CEREB.NORMS_avrg(:,1),'--','Color','k');
@@ -628,36 +587,31 @@ if(Nflags>0)
     if(condflag)
         nexttile;
         hold on;
-        plot(X,CEREB.COND_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
-        plot(X,CEREB.COND_TOTAL_avrg,'o--','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,FFL.COND_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,FFL.COND_TOTAL_avrg,'o--','Color',cerebcolour,'Markerfacecolor',cerebcolour);
 
         ylim([1 inf]);
         set(gca, 'YScale', 'log');
         ylabel('CN','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
-        if(legendflag)
-            legend('ctx','total ctx','gcs','total gcs','Location','Best');
-        end
+        legend('task-relevant','total','Location','Best');
     end
 
     if(dimflag)
         nexttile;
         hold on;
-        plot(X,CEREB.DIM_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,FFL.DIM_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
 
         ylim([1 inf]);
         ylabel('Dimensionality','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
-        if(legendflag)
-            legend('ctx','gcs','signal ctx','signal gcs','Location','Best');
-        end
     end
 
     if(compactflag)
         nexttile;
         yyaxis left
         hold on;
-        plot(X,CEREB.COND_TOTAL_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,FFL.COND_TOTAL_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
 
         ylim([1 1e5]);
         yticks([1 1e5]);
@@ -666,7 +620,7 @@ if(Nflags>0)
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
 
         yyaxis right
-        plot(X,CEREB.DIM_avrg,'o-','Color',cerebcolour*0.7,'Markerfacecolor',cerebcolour*0.7);
+        plot(X,FFL.DIM_avrg,'o-','Color',cerebcolour*0.7,'Markerfacecolor',cerebcolour*0.7);
         ylim([1 2]);
         yticks([1 2]);
         ylabel('Total dim.','FontSize',FS);
@@ -681,7 +635,7 @@ if(Nflags>0)
     if(pranglesflag)
         nexttile;
         hold on;
-        plot(X,CEREB.PRINCIPAL_ANGLES_avrg,'o-','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
+        plot(X,FFL.PRINCIPAL_ANGLES_avrg,'o-','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
 
         ylim([0 maxprang]);
         ylabel('Principal angle (deg.)','FontSize',FS);
@@ -692,8 +646,8 @@ if(Nflags>0)
         nexttile;
         hold on;
 
-        plot(X,CEREB.SINEPROD_SIGNAL_avrg,'o-','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
-        plot(X,prod(sind(CEREB.PRINCIPAL_ANGLES_avrg),2),'o--','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
+        plot(X,FFL.SINEPROD_SIGNAL_avrg,'o-','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
+        plot(X,prod(sind(FFL.PRINCIPAL_ANGLES_avrg),2),'o--','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
 
         ylim([-Inf 1]);
         ylabel('Sine product','FontSize',FS);
@@ -706,7 +660,7 @@ if(Nflags>0)
         nexttile;
         hold on;
 
-        plot(X,CEREB.FULLSINEPROD_avrg,'o-','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
+        plot(X,FFL.FULLSINEPROD_avrg,'o-','Color',cerebcolour,'MarkerFaceColor',cerebcolour);
 
         ylim([-Inf 1]);
         ylabel('Global sine product','FontSize',FS);
@@ -717,7 +671,7 @@ if(Nflags>0)
     if(Wnormflag)
         nexttile;
         hold on;
-        plot(X,CEREB.WNORM_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,FFL.WNORM_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
 
         % plot(X,CEREB.STATS_avrg.gain_mean,'o-','Markerfacecolor',suppcolour,'color',suppcolour);
 
@@ -729,9 +683,9 @@ if(Nflags>0)
     if(floquetflag)
         nexttile;
         hold on;
-        plot(X,CEREB.FLOQUET_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,FFL.FLOQUET_avrg,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
         if(medianflag==1)
-            plot(X,CEREB.FLOQUET_median,':','Color',cerebcolour);
+            plot(X,FFL.FLOQUET_median,':','Color',cerebcolour);
         end
         yline(1,'k--');
         ylim([0.01 1e5]);
@@ -745,7 +699,7 @@ if(Nflags>0)
     if(floquetfracflag)
         nexttile;
         hold on;
-        plot(X,CEREB.FLOQUET_frac,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
+        plot(X,FFL.FLOQUET_frac,'o-','Color',cerebcolour,'Markerfacecolor',cerebcolour);
         ylim([0 1]);
         ylabel(['Fraction FM > ' num2str(FMcutoff)],'FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
@@ -898,7 +852,6 @@ if(traceflag)
         sx=6*nc;
         sy=5*nr;
         time=data.time_test;
-        Z=data.Z_test;
         PC=data.PC_test;
         target=data.target_test;
 
@@ -915,17 +868,14 @@ if(traceflag)
                 % when targets are different for each realisation choose
                 % random example traces
                 iex=randi([1, Nreal]);
-                Z_plot=Z{i}(:,iex);
                 PC_plot=PC{i}(:,iex);
             else
-                Z_plot=mean(Z{i},2);
                 PC_plot=mean(PC{i},2);
             end
 
             nexttile(k+4*nc);
             hold on;
             yyaxis left;
-            plot(time{i},Z_plot,'Color',ctxcolour*0.5);
             if(k==1)
                 ylabel('Avrg trace','FontSize',FS);
             end
@@ -943,7 +893,6 @@ if(traceflag)
             nexttile(k+nc);
             hold on;
             yyaxis left;
-            plot(time{i},Z{i}(:,iex(1)),'Color',ctxcolour);
             if(k==1)
                 ylabel('Sample trace','FontSize',FS);
             end
@@ -959,7 +908,6 @@ if(traceflag)
             nexttile(k+2*nc);
             hold on;
             yyaxis left;
-            plot(time{i},Z{i}(:,iex(2)),'Color',ctxcolour);
             if(k==1)
                 ylabel('Sample trace','FontSize',FS);
             end
@@ -976,7 +924,6 @@ if(traceflag)
             hold on;
             nexttile(k+3*nc);
             yyaxis left;
-            plot(time{i},Z{i}(:,iex(3)),'Color',ctxcolour);
             if(k==1)
                 ylabel('Sample trace','FontSize',FS);
             end
@@ -1039,10 +986,10 @@ if(ERRdistrbflag)
 
     nexttile;
     hold on;
-    plot(Xdistrb,CEREB.RMSE_distrb,'o','Markerfacecolor',cerebcolour,'MarkerEdgeColor','None','color',cerebcolour,'Markersize',MS);
-    plot(X,CEREB.RMSE_test,'-','color',cerebcolour*0.7);
+    plot(Xdistrb,FFL.RMSE_distrb,'o','Markerfacecolor',cerebcolour,'MarkerEdgeColor','None','color',cerebcolour,'Markersize',MS);
+    plot(X,FFL.RMSE_test,'-','color',cerebcolour*0.7);
     if(medianflag)
-        plot(X,CEREB.RMSE_median_test,':','color',cerebcolour);
+        plot(X,FFL.RMSE_median_test,':','color',cerebcolour);
     end
 
     set(gca, 'YScale', 'log');
@@ -1053,10 +1000,10 @@ if(ERRdistrbflag)
     if(floquetflag)
         nexttile;
         hold on;
-        plot(Xdistrb,CEREB.FLOQUET_distrb,'o','Markerfacecolor',cerebcolour,'MarkerEdgeColor','None','color',cerebcolour,'Markersize',MS);
-        plot(X,CEREB.FLOQUET_avrg,'-','color',cerebcolour*0.7);
+        plot(Xdistrb,FFL.FLOQUET_distrb,'o','Markerfacecolor',cerebcolour,'MarkerEdgeColor','None','color',cerebcolour,'Markersize',MS);
+        plot(X,FFL.FLOQUET_avrg,'-','color',cerebcolour*0.7);
         if(medianflag)
-            plot(X,CEREB.FLOQUET_median,':','color',cerebcolour);
+            plot(X,FFL.FLOQUET_median,':','color',cerebcolour);
         end
 
         set(gca, 'YScale', 'log');
@@ -1290,12 +1237,6 @@ if(plotpara.stabmarginflag==1)
     for k=1:numel(plotpara.xintersect)
         xline(plotpara.xintersect(k),plotpara.xlinestyle,'Color',plotpara.xlinecol,'LineWidth',plotpara.LW);
     end
-    % x_vert = [X(1) X(end) X(end) X(1)];
-    % y_vert = [1.1 1.1 1.2 1.2];
-    % patch(x_vert,y_vert,plotpara.xlinecol,'EdgeColor','none');
-    for k=1:numel(plotpara.xintersect_ctx)
-        xline(plotpara.xintersect_ctx(k),plotpara.xlinestyle,'Color',plotpara.xlinecol_ctx,'LineWidth',plotpara.LW);
-    end
 end
 xlabel(plotpara.Xstr,'FontSize',plotpara.FS);
 line = get(ah,'Children');
@@ -1324,7 +1265,7 @@ else
 end
 end
 
-function plot_angles(X,angles,labels_str,plotpara,colour,titlestr,Nang,varargin)
+function plot_angles(X,angles,plotpara,colour,titlestr,Nang,varargin)
 
 anglesmodeflag=0;
 argidx = 1;
@@ -1364,14 +1305,6 @@ for k=kidx
     for j=jidx(k)
         if(all(angles(:,k+1,j+1)~=0))
             plot(X,angles(:,k+1,j+1),'o-','Color',colour,'Markerfacecolor',colour,'Linewidth',plotpara.LW);
-            if(plotpara.labelsflag==1)
-                if(plotpara.learnflag==128 || plotpara.learnflag==132)
-                    [angmax, maxidx]=min(angles(:,k+1,j+1));
-                else
-                    [angmax, maxidx]=max(angles(:,k+1,j+1));
-                end
-                text(X(maxidx),angmax,labels_str(k+1,j+1),'Color',colour);
-            end
         end
     end
 end
@@ -1380,14 +1313,6 @@ end
 % if(anglesmodeflag==1)
 %     for k=1:(2*plotpara.Ncomp)
 %         plot(X,angles(:,k+1,1),'--','Color',colour*0.5,'Markerfacecolor',colour*0.5,'Linewidth',plotpara.LW);
-%         if(plotpara.labelsflag==1)
-%             if(plotpara.learnflag==128|| plotpara.learnflag==132)
-%                 [angmax, maxidx]=min(angles(:,k+1,1));
-%             else
-%                 [angmax, maxidx]=max(angles(:,k+1,1));
-%             end
-%             text(X(maxidx),angmax,labels_str(k+1,1),'Color',colour*0.5);
-%         end
 %     end
 % end
 
@@ -1397,7 +1322,7 @@ Set_CCxC_scan_FigureProperties(gca,X,plotpara);
 title(titlestr); ax = gca; ax.TitleFontSizeMultiplier = 0.8;
 end
 
-function plot_R(X,R,labels_str,plotpara,col)
+function plot_R(X,R,plotpara,col)
 
 R=real(acosd(R));
 
@@ -1406,11 +1331,6 @@ hold on;
 for k=1:size(R(1,:,:),2)
     for j=1:(k-1)
         plot(X,R(:,k,j),'o-','Color',col,'Markerfacecolor',col,'Linewidth',plotpara.LW);
-        if(plotpara.labelsflag==1)
-            % [angmax, maxidx]=min(R(:,k+1,j+1));
-            [angmax, maxidx]=max(R(:,k,j));
-            text(X(maxidx),angmax,labels_str(k+1,j+1),'Color',col);
-        end
     end
 end
 

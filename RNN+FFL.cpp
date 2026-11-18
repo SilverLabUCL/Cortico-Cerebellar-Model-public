@@ -92,11 +92,11 @@ int main (int argc, char* argv[]) {
 	}
 	std::cout << std::endl;
 
-	std::ofstream nuCx_test_file(para.path+"nuCx_test.dat");		if (!nuCx_test_file) exit(EXIT_FAILURE);
-	std::ofstream nuCx_openloop_file(para.path+"nuCx_openloop.dat");			if (!nuCx_openloop_file) exit(EXIT_FAILURE);
+	std::ofstream nuRNN_test_file(para.path+"nuRNN_test.dat");		if (!nuRNN_test_file) exit(EXIT_FAILURE);
+	std::ofstream nuRNN_openloop_file(para.path+"nuRNN_openloop.dat");			if (!nuRNN_openloop_file) exit(EXIT_FAILURE);
 
-	std::ofstream nuGC_test_file(para.path+"GC_test.dat");			if (!nuGC_test_file) exit(EXIT_FAILURE);
-	std::ofstream nuGC_openloop_file(para.path+"GC_openloop.dat");				if (!nuGC_openloop_file) exit(EXIT_FAILURE);
+	std::ofstream nuFFL_test_file(para.path+"nuFFL_test.dat");			if (!nuFFL_test_file) exit(EXIT_FAILURE);
+	std::ofstream nuFFL_openloop_file(para.path+"nuFFL_openloop.dat");				if (!nuFFL_openloop_file) exit(EXIT_FAILURE);
 
 	std::ofstream S_total_ctx_file(para.path+"stotal_RNN.dat");		if (!S_total_ctx_file) exit(EXIT_FAILURE);
 	std::ofstream S_total_cereb_file(para.path+"stotal_FFL.dat");	if (!S_total_cereb_file) exit(EXIT_FAILURE);
@@ -714,10 +714,10 @@ int main (int argc, char* argv[]) {
 			// write stuff to files
 			if ((t % (para.write_every* int(para.dt/para.dt_euler)))==0) {
 				if(para.learnflag<99){
-					for(int i= 0; i < para.Ncx; i++)	nuCx_test_file << para.nuCx[i] << " ";
-					nuCx_test_file << std::endl;
-					for(int i= 0; i < para.Ngc; i++) 	nuGC_test_file << para.nuGC[i] << " ";
-					nuGC_test_file << std::endl;
+					for(int i= 0; i < para.Ncx; i++)	nuRNN_test_file << para.nuCx[i] << " ";
+					nuRNN_test_file << std::endl;
+					for(int i= 0; i < para.Ngc; i++) 	nuFFL_test_file << para.nuGC[i] << " ";
+					nuFFL_test_file << std::endl;
 				}
 				if(para.ROwriteflag==1) {
 					FFLoutput_test_files[np] << para.PC << "\t";
@@ -757,10 +757,10 @@ int main (int argc, char* argv[]) {
 			// write stuff to files
 			if ((t % para.write_every)==0) {
 				if(para.learnflag<99){
-					for(int i= 0; i < para.Ncx; i++)	nuCx_test_file << para.nuCx[i] << " ";
-					nuCx_test_file << std::endl;
-					for(int i= 0; i < para.Ngc; i++) 	nuGC_test_file << para.nuGC[i] << " ";
-					nuGC_test_file << std::endl;
+					for(int i= 0; i < para.Ncx; i++)	nuRNN_test_file << para.nuCx[i] << " ";
+					nuRNN_test_file << std::endl;
+					for(int i= 0; i < para.Ngc; i++) 	nuFFL_test_file << para.nuGC[i] << " ";
+					nuFFL_test_file << std::endl;
 				}
 				if(para.ROwriteflag==1) {
 					FFLoutput_test_files[np] << para.PC << "\t";
@@ -875,11 +875,11 @@ int main (int argc, char* argv[]) {
 		// write to files
 		if(para.learnflag<99){
 			if ((t % para.write_every)==0) {
-				for(int i= 0; i < para.Ncx; i++)	nuCx_openloop_file << para.nuCx[i] << " ";
-				nuCx_openloop_file << std::endl;
+				for(int i= 0; i < para.Ncx; i++)	nuRNN_openloop_file << para.nuCx[i] << " ";
+				nuRNN_openloop_file << std::endl;
 
-				for(int i= 0; i < para.Ngc; i++) 	nuGC_openloop_file << para.nuGC[i] << " ";
-				nuGC_openloop_file << std::endl;
+				for(int i= 0; i < para.Ngc; i++) 	nuFFL_openloop_file << para.nuGC[i] << " ";
+				nuFFL_openloop_file << std::endl;
 
 			}
 		}
@@ -1070,11 +1070,11 @@ int main (int argc, char* argv[]) {
 //	*************************
 // 	terminate program
 	log_file << "Terminate"<< std::endl;
-   	nuCx_test_file.close();
-	nuCx_openloop_file.close();
+   	nuRNN_test_file.close();
+	nuRNN_openloop_file.close();
 
-	nuGC_test_file.close();
-	nuGC_openloop_file.close();
+	nuFFL_test_file.close();
+	nuFFL_openloop_file.close();
 
 	S_total_ctx_file.close();
 	S_total_cereb_file.close();

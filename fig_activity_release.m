@@ -29,11 +29,11 @@ CORTEXONLYflag=data.parameters.flags.cortexonlyflag;
 Nrnn=data.parameters.Ncx;
 Nffl=data.parameters.Ngc;
 
-RNN_testphase=data.Cx_test;
-RNN_FTphase=data.Cx_FT;
+RNN_testphase=data.nuRNN_test;
+RNN_FTphase=data.nuRNN_openloop;
 if(CORTEXONLYflag==0)
-    FFL_testphase=data.GC_test;
-    FFL_FTphase=data.GC_FT;
+    FFL_testphase=data.nuFFL_test;
+    FFL_FTphase=data.nuFFL_openloop;
 else
     FFL_testphase=nan(size(RNN_testphase));
     FFL_FTphase=nan(size(RNN_FTphase));

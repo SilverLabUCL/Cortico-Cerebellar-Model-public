@@ -46,12 +46,12 @@ data.simcount=readmatrix([path_sim,'simcount.dat']);
 
 %% single example data
 if(flags.learnflag<3)
-    data.Cx_test=readmatrix([path_sim,'nuCx_test.dat']);
-    data.Cx_FT=readmatrix([path_sim,'nuCx_openloop.dat']);
+    data.nuRNN_test=readmatrix([path_sim,'nuRNN_test.dat']);
+    data.nuRNN_openloop=readmatrix([path_sim,'nuRNN_openloop.dat']);
 
     if(CORTEXONLY==0)
-        data.GC_test=readmatrix([path_sim,'GC_test.dat']);
-        data.GC_FT=readmatrix([path_sim,'GC_openloop.dat']);
+        data.nuFFL_test=readmatrix([path_sim,'nuFFL_test.dat']);
+        data.nuFFL_openloop=readmatrix([path_sim,'nuFFL_openloop.dat']);
     end
 
     path_para='parameter_1/';

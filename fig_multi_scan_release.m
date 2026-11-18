@@ -3,7 +3,7 @@ function [NET, X]=fig_multi_scan_release(varargin)
 trainflag=0; logYflag=0;gainflag=0; medianflag=0; RMSEflag=0;
 floquetflag=0; floquetfracflag=0; dimflag=0;
 Wnormflag=0; condflag=0; colourflag=0; averageCXflag=0;
-legendflag=0; ERRoutlierflag=0; sNflag=0; normflag=0;
+ERRoutlierflag=0; sNflag=0; normflag=0;
 maxsineprodflag=0;saveflag=0;xlogflag=0;pranglesflag=0;stabmarginflag=0;indvsineprodflag=0;fullsineprodflag=0;
 compactflag=0;labelsflag=0;
 filenamestr='';
@@ -73,9 +73,6 @@ while argidx<=length(varargin)
     elseif strcmpi( varargin{argidx}, 'show full sine product' ) || strcmpi( varargin{argidx}, 'show sine product' ) ||...
             strcmpi( varargin{argidx}, 'sine product') || strcmpi( varargin{argidx}, 'sineproduct')
         fullsineprodflag = 1;
-        argidx=argidx+1;
-    elseif strcmpi( varargin{argidx}, 'show legends' ) || strcmpi( varargin{argidx}, 'show legend' ) || strcmpi( varargin{argidx}, 'legend')
-        legendflag = 1;
         argidx=argidx+1;
     elseif strcmpi( varargin{argidx}, 'show maximum sine product' ) || strcmpi( varargin{argidx}, 'show max sine prod' )
         maxsineprodflag = 1;
@@ -504,9 +501,6 @@ if(Nflags>0)
         set(gca, 'YScale', 'log');
         ylabel('CN','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
-        if(legendflag)
-            legend('ctx','total ctx','gcs','total gcs','Location','Best');
-        end
     end
 
     if(dimflag)
@@ -519,9 +513,6 @@ if(Nflags>0)
         ylim([1 inf]);
         ylabel('Dimensionality','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
-        if(legendflag)
-            legend('ctx','gcs','signal ctx','signal gcs','Location','Best');
-        end
     end
 
     if(compactflag)

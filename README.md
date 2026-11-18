@@ -13,16 +13,13 @@ C++ simulation code and MATLAB analysis scripts accompanying the manuscript
 > <details><summary>Open items checklist</summary>
 >
 > - [ ] Overview paragraph and model descriptions (Section 1)
-> - [ ] List all `--learnmode` values and write parameter descriptions (Section 5, `docs/PARAMETERS.md`)
-> - [ ] Plain-text output file names and the location of each JSON file (Section 7)
-> - [ ] Meaning of the `'parameters'` option and full option lists of the MATLAB plotting scripts (Section 8)
-> - [ ] How `read_simulations_release.m` distinguishes single simulations from sweeps (Section 8)
-> - [ ] Structure of `figure_sim_commands.txt` and the figure table (Section 9)
+> - [ ] List all `--learnmode` values and write the parameter descriptions (Section 5, `docs/PARAMETERS.md`)
+> - [ ] Full option lists of the MATLAB plotting scripts, or a pointer to header comments in the scripts (Section 8)
+> - [ ] What `fig_Wout_2S_1N_release.m` needs as input, and how its MATLAB command is provided in the Zenodo archive (Sections 8 and 9)
+> - [ ] Figure table: figure -> Zenodo data -> MATLAB script (Section 9)
 > - [ ] Zenodo DOI, contents, size, folder layout and where to unpack (Sections 9 and 10)
-> - [ ] Peak memory use (Section 11)
-> - [ ] Dockerfile and Docker instructions (Section 13)
+> - [ ] Dockerfile: fill in the SHA-256 checksums, optionally pin the base image by digest, commit `Dockerfile` and `.dockerignore` (Section 13)
 > - [ ] Paper title, authors, DOIs, BibTeX, contact, funding (Sections 1, 16, 17)
-> - [ ] Verify the from-source install steps for GSL and Armadillo (Section 3)
 > - [ ] Add `CITATION.cff` and tag the release (e.g. `v1.0-paper`)
 > - [ ] Optional / low priority: reference output and check script (Section 6)
 > </details>
@@ -62,8 +59,8 @@ The repository contains:
   - `RNN_only.cpp`: [one-line description of the architecture]
   - `RNN+FFL.cpp`: [one-line description; spell out FFL]
 - MATLAB scripts that load the simulation output, compute statistics and generate the figures,
-- a text file (`figure_sim_commands.txt`) listing the exact commands used for the simulations in the paper,
-- a Dockerfile for a reproducible build environment.
+- a text file (`figure_sim_commands.txt`) listing the console commands for the simulations of each figure in the paper,
+- a Dockerfile that builds a ready-to-run environment with all dependencies.
 
 The repository does **not** contain the raw simulation output of the paper. The processed data
 behind each figure are archived on Zenodo (see [Data](#10-data-zenodo)).
@@ -83,9 +80,11 @@ REP/
 ├── fig_RNN_scan_release.m        # MATLAB: analysis + plots, RNN_only parameter sweeps
 ├── fig_RNN_FFL_scan_release.m    # MATLAB: analysis + plots, RNN+FFL parameter sweeps
 ├── fig_multi_scan_release.m      # MATLAB: analysis + plots combining several structs
+├── fig_Wout_2S_1N_release.m      # MATLAB: recreates Supplementary Fig. 2
 ├── findIntersect.m               # MATLAB: helper (stability margins from Floquet analysis)
-├── figure_sim_commands.txt       # commands used for the simulations in the paper
+├── figure_sim_commands.txt       # console commands for the simulations of each figure
 ├── Dockerfile
+├── .dockerignore
 ├── LICENSE
 └── README.md
 ```
@@ -94,6 +93,9 @@ REP/
 exists after cloning.
 
 ## 3. Requirements
+
+You can either install the dependencies yourself (this section) or use the provided
+[Docker image](#13-docker), which contains everything except MATLAB.
 
 ### Tested environment
 
@@ -114,35 +116,34 @@ MATLAB scripts read the JSON output with `jsondecode`.
 
 ### Installing the dependencies
 
-**Compiler, Boost and OpenBLAS** (Ubuntu 24.04 packages; the packaged Boost is 1.83.0):
+**Compiler, Boost and OpenBLAS/LAPACK** (Ubuntu 24.04 packages; the packaged Boost is 1.83.0):
 
 ```bash
 sudo apt update
-sudo apt install build-essential libboost-program-options-dev libboost-dev libopenblas-dev liblapack-dev cmake
+sudo apt install build-essential cmake curl xz-utils libboost-dev libboost-program-options-dev libopenblas-pthread-dev liblapack-dev
 ```
 
-**GSL 2.8 and Armadillo 14.4.0** were built from source. Download the source tarballs from the
+**GSL 2.8 and Armadillo 14.4.0** are built from source. Download the source tarballs from the
 [GSL](https://www.gnu.org/software/gsl/) and [Armadillo](https://arma.sourceforge.net/download.html)
-websites, then, for example:
+websites, then:
 
 ```bash
 # GSL
 tar xzf gsl-2.8.tar.gz && cd gsl-2.8
-./configure && make -j && sudo make install
+./configure --prefix=/usr/local && make -j && sudo make install
 cd ..
 
 # Armadillo
 tar xf armadillo-14.4.0.tar.xz && cd armadillo-14.4.0
-cmake . && make -j && sudo make install
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build build -j && sudo cmake --install build
 cd ..
 
 sudo ldconfig
 ```
 
-> **TODO [CONFIRM]:** these are the standard build steps; adjust them to match how you actually
-> built the libraries (install prefix, configure options). If a different install prefix is used,
-> add the corresponding `-I`/`-L` flags to the compile commands. The
-> [Docker image](#13-docker) pins the exact versions.
+These are the same build steps as in the [`Dockerfile`](Dockerfile), which is the tested
+reference for the whole installation.
 
 ## 4. Compilation
 
@@ -176,7 +177,7 @@ The thread count changes only the runtime, not the numerical results.
 
 Both programs take their settings from the command line, parsed with
 [Boost.Program_options](https://www.boost.org/doc/libs/release/doc/html/program_options.html).
-The options used in the test simulations are:
+The options used in the test simulations, plus `--ROwrite`, are:
 
 | Option | Meaning | Values used here |
 |---|---|---|
@@ -186,6 +187,7 @@ The options used in the test simulations are:
 | `--seed` | seed of the random number generator (results are deterministic for a given seed) | `-1` |
 | `--lambda` | multiplier that scales the frequencies of the target signal | `10` |
 | `--Floquet` | compute Floquet multipliers (`ON`/`OFF`) | `OFF` |
+| `--ROwrite` | in a parameter sweep, also write the test-phase readout activity files (`FFLoutput_test.dat`, `RNNoutput_test.dat`) into every `parameter_i/` folder | `ON` (not used in the tests) |
 
 The full list of options, their defaults and descriptions is printed by:
 
@@ -200,8 +202,7 @@ The full list of options, their defaults and descriptions is printed by:
 
 Every run also writes a **log file**, `simulation_results/log_file.dat`, that accumulates a
 record of which stage of the program is currently executing (for example `Fourier analysis`).
-This is useful for tracking progress in long simulations.
-[TODO CONFIRM: is the log file also overwritten by each new run?]
+This is useful for tracking progress in long simulations. A new run overwrites the log file.
 
 ## 6. Test simulations
 
@@ -227,11 +228,13 @@ running the next.
 All output is written to `simulation_results/` (see [Output files](#7-output-files)).
 
 - **Tests 1 and 2** (single simulations) write the general files (`parameters.json`,
-  `flags.json`, population firing rates, `log_file.dat`) and a subfolder `parameter_1/`, which
-  also contains `weights_single_trial.json` with the network connectivity.
+  `flags.json`, the population firing-rate files, `log_file.dat`) and a subfolder `parameter_1/`.
+  It contains, among others, the readout activity files and `weights_single_trial.json`
+  with the network connectivity.
 - **Tests 3 and 4** (sweeps) create, for each parameter set `i` of the sweep, a folder
-  `parameter_i/` containing the same kind of files as in the single-simulation case
-  **[CONFIRM: whether `weights_single_trial.json` is also written in sweeps]**.
+  `parameter_i/` containing the same kind of files as in the single-simulation case, except
+  that `weights_single_trial.json` is not written. The readout activity files are only written
+  if `--ROwrite ON` is added to the command.
 
 ### Checking that a test worked
 
@@ -253,24 +256,26 @@ All output is written to `simulation_results/`. Files with the extension `.json`
 format (written with [nlohmann/json](https://github.com/nlohmann/json)); all other output
 files are plain text.
 
+**`simulation_results/`**
+
 | File / folder | Format | Contents |
 |---|---|---|
-| `log_file.dat` | text | log of the program's progress |
+| `log_file.dat` | text | log of the program's progress (overwritten by each run) |
 | `parameters.json` | JSON | all simulation parameters |
-| `flags.json` | JSON | all flags |
-| [TODO: file names] | text | population firing rates from the test phase and from an open-loop phase |
+| `flags.json` | JSON | all flags (the flag `learnflag` tells the MATLAB scripts whether the output is a single simulation or a sweep) |
+| `nuRNN_test`, `nuRNN_openloop` | text | RNN population firing rates from the test phase and from an open-loop phase |
+| `nuFFL_test`, `nuFFL_openloop` | text | the same for the FFL population **[CONFIRM: file extensions, and which files `RNN_only` writes]** |
 | `parameter_1/` (`parameter_i/` in sweeps) | | one folder per parameter set, see below |
 
-**Contents of `parameter_1/` (`parameter_i/`)** — for each network realisation (`Nreal`)
-**[CONFIRM: assignment of contents to file names]**:
+**`parameter_1/` (`parameter_i/`)**: for each network realisation (`Nreal`):
 
 | File | Format | Contents |
 |---|---|---|
 | `targets.json` | JSON | target signals |
 | `stats.json` | JSON | network firing-rate statistics |
 | `measures.json` | JSON | network representational measures |
-| [TODO: file name] | text | test-phase readout neuron activity |
-| `weights_single_trial.json` | JSON | network connectivity (recurrent weights, readout weights, etc.) together with single-unit time constants, gains and thresholds, from a single trial |
+| `RNNoutput_test.dat`, `FFLoutput_test.dat` | text | test-phase readout neuron activity (RNN and FFL). Written in single simulations; in sweeps only with `--ROwrite ON` **[CONFIRM: which program writes which, and that they are written by default in single simulations]** |
+| `weights_single_trial.json` | JSON | network connectivity (recurrent weights, readout weights, etc.) together with single-unit time constants, gains and thresholds, from a single trial. Written **only in single simulations** (`parameter_1/`), not in parameter sweeps |
 
 Each new run overwrites all content from previous simulations in this folder.
 
@@ -287,11 +292,12 @@ Learning Toolbox.
 
 | Script | Purpose |
 |---|---|
-| `read_simulations_release.m` | Reads the simulation data from the output folder and puts everything into a MATLAB struct. The struct has a slightly different layout for a single simulation and for a parameter sweep. |
+| `read_simulations_release.m` | Reads the simulation data from the output folder and puts everything into a MATLAB struct. It distinguishes a single simulation from a parameter sweep by evaluating the variable `learnflag` in `flags.json`; the struct has a slightly different layout in the two cases. |
 | `fig_activity_release.m` | Plots the output of a **single simulation** (e.g. test commands 1 and 2). Can plot principal-component modes and Fourier modes of the population activity. Reads the data from the struct. |
 | `fig_RNN_scan_release.m` | Analyses and plots **RNN_only parameter sweeps** (e.g. test command 3). Averages measures extracted from the simulations over multiple realisations and plots, for example, average output errors, principal angles, norms and Floquet multipliers in multiple panels. Reads the struct created by `read_simulations_release.m`. |
 | `fig_RNN_FFL_scan_release.m` | Same as `fig_RNN_scan_release.m`, for **RNN+FFL** sweeps (e.g. test command 4). |
 | `fig_multi_scan_release.m` | Data analysis and plotting from **several structs**, allowing multiple curves in the same panel. |
+| `fig_Wout_2S_1N_release.m` | Recreates **Supplementary Fig. 2**. The command to run it is provided in the Zenodo archive together with the other figure commands. |
 | `findIntersect.m` | Helper routine used by the plotting scripts to find the stability margins obtained from the Floquet analysis. |
 
 ### Example calls
@@ -314,7 +320,8 @@ fig_activity_release(MAT_STRUCT, 'show output', 'show activity', 'show modes', 6
 **RNN_only parameter sweep** (e.g. after test 3): plot statistics of the sweep versus the sweep
 parameter. Here: RMSE, task-relevant vector norms and the sine product (as defined in the
 paper). `'RMSE log axis'` sets the y-axis of the RMSE panel to log scale and `[1e-3 1]` sets
-its y-axis limits:
+its y-axis limits. `'parameters'` adds a figure panel that lists the most important parameters
+of the simulation:
 
 ```matlab
 fig_RNN_scan_release(MAT_STRUCT, 'RMSE log axis', [1e-3 1], 'RMSE', 'norms', 'sine product', 'parameters');
@@ -332,16 +339,14 @@ fig_RNN_FFL_scan_release(MAT_STRUCT, 'RMSE log axis', [1e-3 1], 'RMSE', 'norms',
 fig_multi_scan_release('data', MAT_STRUCT_1, MAT_STRUCT_2, 'RMSE log axis', [1e-3 1], 'RMSE', 'norms', 'sine product');
 ```
 
-> **TODO:** explain the `'parameters'` option, and either list all options of the plotting
-> scripts here or point to a header comment in each script. Also state how
-> `read_simulations_release.m` distinguishes a single simulation from a sweep
-> (automatically, or via an argument).
+> **TODO:** either list all options of the plotting scripts here or point to a header comment
+> in each script. Also state what `fig_Wout_2S_1N_release.m` needs as input.
 
 ## 9. Reproducing the paper
 
-The commands used for the simulations in the paper are listed in
-**`figure_sim_commands.txt`**, included in this repository.
-[TODO: describe how the file is organised, e.g. one block per figure.]
+The file **`figure_sim_commands.txt`** lists the console commands used for the simulations of
+each figure in the paper. The commands to generate Supplementary Fig. 2 with
+`fig_Wout_2S_1N_release.m` are provided in the Zenodo archive ([Section 10](#10-data-zenodo)).
 
 | Figure | Data (Zenodo) | MATLAB script |
 |---|---|---|
@@ -349,21 +354,23 @@ The commands used for the simulations in the paper are listed in
 | Fig. 3 | [file] | [script] |
 | ... | ... | ... |
 | Fig. 8 | [file] | [script] |
+| Suppl. Fig. 2 | [file] | `fig_Wout_2S_1N_release.m` |
 
 There are two ways to proceed:
 
 - **(a) Regenerate the figures from the processed data (fast).** Download the data from Zenodo
   ([Section 10](#10-data-zenodo)) and run the plotting scripts. No C++ compilation is needed.
-- **(b) Rerun the simulations (slow).** Compile the programs, run the relevant commands from
-  `figure_sim_commands.txt`, then run the MATLAB scripts on the new output. Expect runtimes of
-  up to several hours per figure ([Section 11](#11-computational-resources-and-runtime)).
+- **(b) Rerun the simulations (slow).** Compile the programs (or use the Docker image), run the
+  relevant commands from `figure_sim_commands.txt`, then run the MATLAB scripts on the new
+  output. Expect runtimes of up to several hours per figure
+  ([Section 11](#11-computational-resources-and-runtime)).
 
 ## 10. Data (Zenodo)
 
 The processed data used to generate the figures are archived at
 **[https://doi.org/10.5281/zenodo.XXXXXXX](https://doi.org/10.5281/zenodo.XXXXXXX)** (license: CC BY 4.0).
 
-- **Contents:** processed figure data (text files). Raw simulation output is *not* included.
+- **Contents:** processed figure data (text files) and [CONFIRM: the MATLAB commands for generating the figures]. Raw simulation output is *not* included.
 - **Size:** [TODO]
 - **Download and placement:** [TODO: e.g. unpack into `data/` in the repository root, and state
   which path the MATLAB scripts expect]
@@ -386,7 +393,6 @@ All simulations were run on a Lenovo ThinkPad P14s Gen 5 (Intel Core Ultra 7 155
 | Typical full parameter sweep (50 repetitions), RNN_only or RNN+FFL, **with** Floquet multipliers | ~8 hours |
 | Fig. 8 (the most complex architecture, Fig. 8g, including Floquet multipliers) | ~50 hours |
 
-Memory: [TODO: peak RAM usage of a typical run].
 Disk space: small; the whole repository including the simulated data is typically smaller than 50 MB.
 
 ## 12. Reproducibility notes
@@ -394,20 +400,50 @@ Disk space: small; the whole repository including the simulated data is typicall
 - Results are deterministic given a random number seed (`--seed`); `--seed -1` is a fixed seed
   and gives the same output on every run on a given machine.
 - The number of OpenMP threads (`OMP_NUM_THREADS`) affects only the runtime, not the numerical results.
+- The simulation results obtained with the Docker image match those from the native Ubuntu 24.04
+  installation described in [Section 3](#3-requirements).
 - Small numerical differences can occur across machines, compilers or BLAS/LAPACK implementations.
   [TODO: state the expected size of such differences, if known.]
 
 ## 13. Docker
 
-A Dockerfile with all dependencies pinned to the versions above is provided.
+The [`Dockerfile`](Dockerfile) builds an image based on Ubuntu 24.04 with g++, Boost, OpenBLAS,
+GSL 2.8 and Armadillo 14.4.0 (the last two built from source), and compiles both programs with
+the commands from [Section 4](#4-compilation). MATLAB is **not** included (it is proprietary
+software); run the MATLAB scripts on the host machine, on the output written by the container.
+The image was tested on x86-64 Ubuntu 24.04; other architectures were not tested.
+
+**Install Docker** following the [official instructions](https://docs.docker.com/engine/install/ubuntu/).
+To run Docker without `sudo`, add your user to the `docker` group
+(`sudo usermod -aG docker $USER`, then log out and back in).
+
+**Build the image** (from the repository root; takes a few minutes):
 
 ```bash
 docker build -t rep .
-docker run --rm -it -v "$(pwd)":/work rep
 ```
 
-TODO: adapt these commands to the final Dockerfile, and state that MATLAB is not included in the
-image (it is proprietary software), so the MATLAB scripts must be run on the host.
+**Run a simulation.** Mount a host folder as `simulation_results/` so that the output is
+written to your machine (here `results/`; test simulation 1 as an example):
+
+```bash
+mkdir -p results
+docker run --rm --user "$(id -u):$(id -g)" \
+  -v "$(pwd)/results:/rep/simulation_results" \
+  rep ./RNN_only.out --learnmode none --Ncomp 3 --Nreal 1 --seed -1 --lambda 10 --Floquet OFF
+```
+
+- Use a different host folder for each run, since each run overwrites the contents of `simulation_results/`.
+- `--user "$(id -u):$(id -g)"` makes the output files belong to your user instead of root.
+- The default is 6 OpenMP threads; change it with `-e OMP_NUM_THREADS=N`.
+- For an interactive shell inside the container, run `docker run --rm -it --user "$(id -u):$(id -g)" -v "$(pwd)/results:/rep/simulation_results" rep`.
+- Rebuild the image after changing the source code.
+
+**Analyse the output in MATLAB** on the host, for example:
+
+```matlab
+MAT_STRUCT = read_simulations_release('results/');
+```
 
 ## 14. Troubleshooting
 
@@ -417,6 +453,8 @@ image (it is proprietary software), so the MATLAB scripts must be run on the hos
 - **Slow runs (single-threaded):** the program was probably compiled without `-fopenmp`, or `OMP_NUM_THREADS` is not set.
 - **Output of an earlier run disappeared:** each run overwrites `simulation_results/`; copy the folder first.
 - **Files or folders not found:** run the programs and MATLAB scripts from the repository root.
+- **MATLAB plots show no readout activity for a sweep:** the readout files are only written in sweeps with `--ROwrite ON`.
+- **`permission denied` when running `docker build`/`docker run`:** your user is not in the `docker` group; use `sudo` or see [Section 13](#13-docker).
 
 ## 15. License
 
