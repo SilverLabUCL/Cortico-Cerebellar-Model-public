@@ -1,0 +1,6 @@
+.git
+.gitignore
+*.out
+simulation_results/*
+!simulation_results/.gitkeep
+data/

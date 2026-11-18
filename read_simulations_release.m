@@ -1,7 +1,6 @@
-function data=read_simulations_release(path_sim,path_connect)
+function data=read_simulations_release(path_sim)
 
-% path_sim='sim/';
-% path_connect='connectivity/';
+% path_sim='simulation_results/';
 
 %% read json file for flags
 fid=fopen([path_sim '/flags.json']);
@@ -97,9 +96,6 @@ if(flags.learnflag<3)
         data.noise_test{1}=checkopen([path_sim,path_para,'noise_test.dat']);
     end
 
-    % data.Inputs=checkopen([path_sim,'Inputs.dat']);
-    % data.State=checkopen([path_sim,'State.dat']);
-
     % read json file for measures
     fid=fopen([path_sim,path_para 'measures.json']);
     raw = fread(fid,inf);
@@ -113,56 +109,6 @@ if(flags.learnflag<3)
         tmp=data.measures_raw.(fn{k});
         data.(fn{k})=tmp;
     end
-
-    % % read json file for single trial data
-    % fid=fopen([path_sim,path_para 'single_trial.json']);
-    % if(fid>-1)
-    %     raw = fread(fid,inf);
-    %     str = char(raw');
-    %     fclose(fid);
-    %     data.single_trial=jsondecode(str);
-    % else
-    %     data.single_trial=[];
-    % end
-    %
-    % data.stotal=checkopen([path_sim,'stotal_RNN.dat']);
-    % if(CORTEXONLY==0)
-    %     data.stotal=checkopen([path_sim,'stotal_FFL.dat']);
-    % end
-    %
-    % % weights
-    % Wcx=readmatrix([path_connect,'Wcx.dat']);
-    % Wcx(:,1:2)=Wcx(:,1:2)+1;
-    % data.weights.Wcx=spconvert(Wcx);
-    %
-    % data.weights.Wout_RNN=readmatrix([path_connect,'Wout_RNN.dat'])';
-    % data.weights.Wfb=readmatrix([path_connect,'Wfb.dat']);
-    % if(data.parameters.flags.interferenceflag>0)
-    %     data.weights.Wfb_interf=readmatrix([path_connect,'Wfb_interf.dat']);
-    % end
-    %
-    % if(CORTEXONLY==0)
-    %     data.weights.MFidx=readmatrix([path_connect,'MFidx.dat']);
-    %     data.weights.Wctxmf=spconvert(data.weights.MFidx);
-    %     if size(data.weights.Wctxmf,2) ~= data.parameters.Ncx
-    %         data.weights.Wctxmf(data.parameters.Nmf,data.parameters.Ncx) = 0;
-    %     end
-    %
-    %     Wmf=readmatrix([path_connect,'Wmf.dat']);
-    %     for i=1:length(Wmf)
-    %         Wmf(i,2)=data.weights.MFidx(Wmf(i,2));
-    %     end
-    %     data.weights.Wmf=spconvert(Wmf);
-    %     data.weights.Wout_FFL=readmatrix([path_connect,'Wout_FFL.dat'])';
-    %     data.weights.Wgoc_distrb=data.single_trial.Wgoc_distrb';
-    %
-    %     data.weights.theta=data.single_trial.theta';
-    %     data.weights.gain=data.single_trial.gain';
-    %     data.weights.tauGC_distrb=data.single_trial.tauGC_distrb';
-    % end
-    %
-    % % initial conditions
-    % data.hcx_inistate=data.single_trial.hcx_inistate;
 
     % Read JSON file for single trial data
     fid = fopen([path_sim, path_para, 'weights_single_trial.json']);
@@ -486,7 +432,6 @@ if(flags.loopflag_test==0)
     data.parameters.loop_test='open loop testphase';
 elseif(flags.loopflag_test==1)
     data.parameters.loop_test='closed loop testphase';
-    % data.parameters.openloop_test_noise=[];
 elseif(flags.loopflag_test==-1)
     data.parameters.loop_test='open loop testphase with white noise';
 end
