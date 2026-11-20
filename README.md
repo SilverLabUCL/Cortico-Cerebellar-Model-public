@@ -1,10 +1,10 @@
-# [PAPER TITLE]: simulation and analysis code
+# Geometric determinants of time series learning and attractor stability in closed-loop circuits: simulation and analysis code
 
 [![License: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
 [![Data: CC BY 4.0](https://img.shields.io/badge/data-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 C++ simulation code and MATLAB analysis scripts accompanying the manuscript
-**"Geometric determinants of time series learning and attractor stability in closed-loop circuits"** by [Alessandro Barri, Harsha Gurnani and R. Angus Silver] (https://doi.org/10.64898/2026.11.10.765266).
+**"Geometric determinants of time series learning and attractor stability in closed-loop circuits"** by Alessandro Barri, Harsha Gurnani and R. Angus Silver (https://doi.org/10.64898/2026.11.10.765266).
 
 > **Maintainer notes (delete before publishing).** Replace every `[PLACEHOLDER]` and `TODO`.
 > Items marked **[CONFIRM]** are my best reading of your notes.
@@ -46,7 +46,6 @@ C++ simulation code and MATLAB analysis scripts accompanying the manuscript
 14. [Troubleshooting](#14-troubleshooting)
 15. [License](#15-license)
 16. [How to cite](#16-how-to-cite)
-17. [Contact and acknowledgements](#17-contact-and-acknowledgements)
 
 ---
 
@@ -101,18 +100,18 @@ You can either install the dependencies yourself (this section) or use the provi
 
 ### Tested environment
 
-| Component | Version |
-|---|---|
-| Operating system | Ubuntu 24.04 (Windows is not supported) |
-| Compiler | g++ 13.3.0 |
-| [Armadillo](https://arma.sourceforge.net/) | 14.4.0 (built from source) |
-| [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl/) | 2.8 (built from source) |
-| [Boost](https://www.boost.org/) | 1.83.0 (components used: `program_options`, `version`) |
-| BLAS / LAPACK | pthread-enabled OpenBLAS (used for both, accessed through Armadillo) |
-| OpenMP | provided by g++ (`-fopenmp`) |
-| [nlohmann/json](https://github.com/nlohmann/json) | 3.11.2 (bundled as `headers/json.hpp`, nothing to install) |
-| MATLAB | R2024b (24.2.0.3212159), Update 9 |
-| MATLAB toolboxes | Statistics and Machine Learning Toolbox |
+| Component                                                         | Version                                                              |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Operating system                                                  | Ubuntu 24.04 (Windows is not supported)                              |
+| Compiler                                                          | g++ 13.3.0                                                           |
+| [Armadillo](https://arma.sourceforge.net/)                        | 14.4.0 (built from source)                                           |
+| [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl/) | 2.8 (built from source)                                              |
+| [Boost](https://www.boost.org/)                                   | 1.83.0 (components used: `program_options`, `version`)               |
+| BLAS / LAPACK                                                     | pthread-enabled OpenBLAS (used for both, accessed through Armadillo) |
+| OpenMP                                                            | provided by g++ (`-fopenmp`)                                         |
+| [nlohmann/json](https://github.com/nlohmann/json)                 | 3.11.2 (bundled as `headers/json.hpp`, nothing to install)           |
+| MATLAB                                                            | R2024b (24.2.0.3212159), Update 9                                    |
+| MATLAB toolboxes                                                  | Statistics and Machine Learning Toolbox                              |
 
 MATLAB scripts read the JSON output with `jsondecode`.
 
@@ -165,9 +164,7 @@ g++ -O3 -o RNN+FFL.out RNN+FFL.cpp -lgsl -lgslcblas -lm -larmadillo -lboost_prog
 | `-lboost_program_options` | link Boost.Program_options (command-line parsing) |
 | `-fopenmp` | enable OpenMP multithreading |
 
-Compiling both programs takes about 40 s in total.
-
-Before running either program, set the number of OpenMP threads (the paper simulations used 6):
+Compiling both programs takes about 40 s in total. Before running either program, set the number of OpenMP threads (the paper simulations used 6):
 
 ```bash
 export OMP_NUM_THREADS=6
@@ -201,13 +198,12 @@ The full list of options, their defaults and descriptions is printed by:
 > the contents of `parameters.json` and `flags.json`) in `docs/PARAMETERS.md`, linked from here.
 
 Every run also writes a **log file**, `simulation_results/log_file.dat`, that accumulates a
-record of which stage of the program is currently executing (for example `Fourier analysis`).
-This is useful for tracking progress in long simulations. A new run overwrites the log file.
+record of which stage of the program is currently executing. A new run overwrites the log file.
 
 ## 6. Test simulations
 
 Run these from the repository root after compiling (and after `export OMP_NUM_THREADS=6`).
-All four commands print a short console summary: a few key parameters, the names of the
+All four commands print a console summary: a key parameters, the names of the
 folders where output is saved, and the Armadillo and Boost versions in use.
 
 | # | Command | Runtime | What it produces |

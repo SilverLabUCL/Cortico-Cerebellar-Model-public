@@ -3,11 +3,11 @@ function [NET, X]=fig_multi_scan_release(varargin)
 trainflag=0; logYflag=0;gainflag=0; medianflag=0; RMSEflag=0;
 floquetflag=0; floquetfracflag=0; dimflag=0;
 Wnormflag=0; condflag=0; colourflag=0; averageCXflag=0;
-ERRoutlierflag=0; sNflag=0; normflag=0;
+ERRoutlierflag=1; sNflag=0; normflag=0;
 maxsineprodflag=0;saveflag=0;xlogflag=0;pranglesflag=0;stabmarginflag=0;indvsineprodflag=0;fullsineprodflag=0;
 compactflag=0;labelsflag=0;
 filenamestr='';
-outlthr=inf;
+outlthr=1;
 FMcutoff=1.0;
 maxprang=60;
 alldata=[];
