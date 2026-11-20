@@ -9,7 +9,7 @@ int set_parameters_flags(netpara &para, int &argc, char* argv[]) {
 	para.lambda=5;				// signal fundamental frequency
 	para.Ncomp=1;				// number of components of combined sine/cosine signal
 	para.Ncomp_intf=2;			// number of components of interference signal
-	para.g=0.9;
+	para.g=0.9;				// recurrent weight gain
 	para.seed=-1;				// default random number seeds
 	para.Nreal=10;				// number of network realisations
 	para.Npara=10;				// number of parameter steps

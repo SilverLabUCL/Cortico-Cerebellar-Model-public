@@ -66,8 +66,8 @@ while argidx<=length(varargin)
         pranglesflag = 1;
         maxprang=varargin{argidx+1};
         argidx=argidx+2;
-    elseif strcmpi( varargin{argidx}, 'show individual sine products' ) || strcmpi( varargin{argidx}, 'individual sine product') ||...
-            strcmpi( varargin{argidx}, 'individual sineproduct') || strcmpi( varargin{argidx}, 'individual sine')
+    elseif strcmpi( varargin{argidx}, 'show individual sine products' ) || strcmpi( varargin{argidx}, 'individual sine products') ||...
+            strcmpi( varargin{argidx}, 'individual sineproducts') || strcmpi( varargin{argidx}, 'individual sine')
         indvsineprodflag = 1;
         argidx=argidx+1;
     elseif strcmpi( varargin{argidx}, 'show full sine product' ) || strcmpi( varargin{argidx}, 'show sine product' ) ||...
@@ -200,7 +200,7 @@ elseif(learnflag==113)
     Xstr='g';
     savestr='g';
 elseif(learnflag==114)
-    X=unique(parameters.eta);
+    X=unique(parameters.delta_eta);
     Xstr='eta';
     xlogflag=1;
 elseif(learnflag==117)
@@ -220,7 +220,7 @@ elseif(learnflag==120)
     xlogflag=1;
 elseif(learnflag==123)
     X=parameters.fc_avrg;
-    Xstr='Fraction of active GCs';
+    Xstr='Frac. of active FFL units';
     savestr='fcoding';
 elseif(learnflag==124)
     X=parameters.sp_alpha;
@@ -228,8 +228,8 @@ elseif(learnflag==124)
     savestr='alphasp';
     xlogflag=1;
 elseif(learnflag==128)
-    X=parameters.rho_Wfb12;
-    Xstr='atanh(\rho_{Wfb12})';
+    X=acosd(parameters.rho_Wfb12);
+    Xstr='angle Wfb12';
     savestr='rho12';
 elseif(learnflag==129)
     X=unique(parameters.sigAmp_intf);
@@ -239,10 +239,11 @@ elseif(learnflag==129)
 elseif(learnflag==131)
     X=unique(parameters.GCgain);
     Xstr='GC gain';
+    savestr='GC gain';
     xlogflag=1;
 elseif(learnflag==132)
-    X=parameters.rho_Wfb13;
-    Xstr='atanh(\rho_{Wfb13})';
+    X=acosd(parameters.rho_Wfb13);
+    Xstr='angle Wfb13';
     savestr='rho13';
 end
 
@@ -315,7 +316,7 @@ end
 %% find idx of maximum sine product
 if(maxsineprodflag==1)
     for i=1:NS
-        Y=sqrt(NET{i}.SINEPROD_SIGNAL_avrg.*prod(sind(NET{i}.PRINCIPAL_ANGLES_avrg),2));
+        Y=NET{i}.SINEPROD_SIGNAL_avrg.*prod(sind(NET{i}.PRINCIPAL_ANGLES_avrg),2);
         [~,ymax_idx{i}]=max(Y);
         Xmax{i}=X(ymax_idx{i});
     end
@@ -354,7 +355,7 @@ else
 end
 
 %% figures
-FS=14;
+FS=12;
 LW=1.5;
 set(0,'defaultAxesFontName', 'Arial');
 if(colourflag)
@@ -424,6 +425,9 @@ if(Nflags>0)
         nexttile;
         hold on;
         for i=1:NS
+            NET{i}.RMSE_ci_lower(NET{i}.RMSE_ci_lower<0)=min(abs(NET{i}.RMSE_ci_lower));
+            fill([X; flipud(X)],[NET{i}.RMSE_ci_upper'; flipud(NET{i}.RMSE_ci_lower')], ...
+                clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
             plot(X,NET{i}.RMSE_test,':','color',clr{i});
             if(stabmarginflag==1)
                 Y_stable=NET{i}.RMSE_test(stableidx{i});
@@ -436,6 +440,7 @@ if(Nflags>0)
                 plot(Xmax{i},NET{i}.RMSE_test(ymax_idx{i}),'ko','MarkerSize',3);
             end
         end
+
         ylabel('Test error (RMSE)','FontSize',FS);
         Set_CCxC_scan_FigureProperties(gca,X,plotpara);
         if(logYflag)
@@ -473,11 +478,11 @@ if(Nflags>0)
 
     if(normflag)
         nexttile;
-        hold on;
-        idx=1:2:(2*Ncomp);
-        
+        hold on;       
         for i=1:NS
-            Y=mean(NET{i}.NORMS_avrg(:,idx+1),2);
+            fill([X; flipud(X)],[NET{i}.NORMS_task_ci_upper'; flipud(NET{i}.NORMS_task_ci_lower')], ...
+                clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
+            Y=NET{i}.NORMS_task_avrg;
             plot(X,Y,':','Color',clr{i});
             if(stabmarginflag==1)
                 Y_stable=Y(stableidx{i});
@@ -494,6 +499,8 @@ if(Nflags>0)
         nexttile;
         hold on;
         for i=1:NS
+            fill([X; flipud(X)],[NET{i}.COND_TOTAL_ci_upper'; flipud(NET{i}.COND_TOTAL_ci_lower')], ...
+                clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
             plot(X,NET{i}.COND_TOTAL_avrg,'-','color',clr{i});
         end
 
@@ -507,6 +514,8 @@ if(Nflags>0)
         nexttile;
         hold on;
         for i=1:NS
+            fill([X; flipud(X)],[NET{i}.DIM_ci_upper'; flipud(NET{i}.DIM_ci_lower')], ...
+                clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
             plot(X,NET{i}.DIM_avrg,'-','color',clr{i});
         end
 
@@ -520,7 +529,9 @@ if(Nflags>0)
         yyaxis left
         hold on;
         for i=1:NS
-            plot(X,NET{i}.COND_TOTAL_avrg,'-','color',clr{i});
+            fill([X; flipud(X)],[NET{i}.COND_TOTAL_ci_upper'; flipud(NET{i}.COND_TOTAL_ci_lower')], ...
+                clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
+            plot(X,NET{i}.COND_TOTAL_avrg,'-','Color',clr{i});
         end
 
         % ylim([1 1e5]);
@@ -532,9 +543,10 @@ if(Nflags>0)
 
         yyaxis right
         for i=1:NS
-            plot(X,NET{i}.DIM_avrg,'-','color',clr{i}*0.5);
+            fill([X; flipud(X)],[NET{i}.DIM_ci_upper'; flipud(NET{i}.DIM_ci_lower')], ...
+                clr{i}*0.7,'EdgeColor', 'none', 'FaceAlpha', 0.4);
+            plot(X,NET{i}.DIM_avrg,'-','Color',clr{i}*0.7);
         end
-
         ylim([1 2]);
         yticks([1 2]);
         ylabel('Total dim.','FontSize',FS);
@@ -549,6 +561,10 @@ if(Nflags>0)
         nexttile;
         hold on;
         for i=1:NS
+            for k=1:size(NET{i}.PRINCIPAL_ANGLES_avrg,2)
+                fill([X; flipud(X)],[NET{i}.PRINCIPAL_ANGLES_ci_upper(:,k); flipud(NET{i}.PRINCIPAL_ANGLES_ci_lower(:,k))], ...
+                    clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
+            end
             plot(X,NET{i}.PRINCIPAL_ANGLES_avrg,'-','color',clr{i});
         end
 
@@ -579,14 +595,16 @@ if(Nflags>0)
         hold on;
 
         for i=1:NS
-            Y=NET{i}.SINEPROD_SIGNAL_avrg.*prod(sind(NET{i}.PRINCIPAL_ANGLES_avrg),2);
+            fill([X; flipud(X)],[NET{i}.FULLSINE_ci_upper'; flipud(NET{i}.FULLSINE_ci_lower')], ...
+                clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
+            % Y=NET{i}.SINEPROD_SIGNAL_avrg.*prod(sind(NET{i}.PRINCIPAL_ANGLES_avrg),2);
+            Y=NET{i}.FULLSINEPROD_avrg;
             plot(X,Y,':','color',clr{i});
             if(stabmarginflag==1)
                 Y_stable=Y(stableidx{i});
                 plot(X_stable{i},Y_stable,'-','color',clr{i});
             end
-        end
-        
+        end 
 
         ylim([1e-4 1]);
         ylabel('Sine product','FontSize',FS);
@@ -613,7 +631,6 @@ if(Nflags>0)
             plot(X,NET{i}.FLOQUET_avrg,'-','color',clr{i});
             % plot(X,NET{i}.FLOQUET_median,'-','color',clr{i});
         end
-
         yline(1,'k--');
         ylim([0.01 1e5]);
         ylabel('Max. Abs. FM','FontSize',FS);
@@ -626,7 +643,14 @@ if(Nflags>0)
         nexttile;
         hold on;
         for i=1:NS
-            plot(X,NET{i}.FLOQUET_frac,'-','color',clr{i});
+            fill([X; flipud(X)],[NET{i}.FLOQUET_frac_ci_upper'; flipud(NET{i}.FLOQUET_frac_ci_lower')], ...
+                clr{i},'EdgeColor', 'none', 'FaceAlpha', 0.4);
+            Y=NET{i}.FLOQUET_frac;
+            plot(X,Y,':','Color',clr{i});
+            if(stabmarginflag==1)
+                Y_stable=Y(stableidx{i});
+	        plot(X_stable{i},Y_stable,'-','Color',clr{i});
+            end
         end
         ylim([0 1]);
         ylabel(['Fraction FM > ' num2str(FMcutoff)],'FontSize',FS);
@@ -645,7 +669,9 @@ end
 %% functions
 function OUT=extract_stats_v3 (parameters,Npara,data,typestring,outlthr)
 Nreal=parameters.Nreal;     % number of repititions / network realisations
-% Ncomp=parameters.Ncomp(end);
+Ncomp=parameters.Ncomp(end);
+
+t_value = tinv(0.975, Nreal - 1);
 
 ERRoutlierflag=parameters.ERRoutlierflag;
 
@@ -691,6 +717,7 @@ OUT.PRINCIPAL_ANGLES_avrg=zeros(Npara,size(PRINCIPAL_ANGLES{1},2));
 OUT.PRINCIPAL_ANGLES_std=zeros(Npara,size(PRINCIPAL_ANGLES{1},2));
 
 OUT.R_avrg=zeros(Npara,size(R{1},1),size(R{1},2));
+OUT.R_std=zeros(Npara,size(R{1},1),size(R{1},2));
 
 maxsize_angles=max(cell2mat(cellfun(@size,ANGLES,'UniformOutput',false)));
 for i=1:size(ANGLES,1)
@@ -720,11 +747,16 @@ for i=1:size(NORMS,1)
     OUT.NORMS_avrg=zeros(Npara,size(NORMS{i},2));
     OUT.NORMS_std=zeros(Npara,size(NORMS{i},2));
 end
+OUT.NORMS_task_avrg=zeros(Npara,1);
+OUT.NORMS_task_std=zeros(Npara,1);
 
 OUT.WNORM_avrg=zeros(Npara,1);
 OUT.WNORM_std=zeros(Npara,1);
 
 OUT.SINEPROD_SIGNAL_avrg=zeros(Npara,1);
+
+OUT.FULLSINEPROD_avrg=zeros(Npara,1);
+OUT.FULLSINEPROD_std=zeros(Npara,1);
 
 OUT.STATS_avrg=[];
 OUT.STATS_std=[];
@@ -746,19 +778,39 @@ for i=1:Npara
 
     OUT.RMSE_median_test(i)=median(RMSE_test{i},'all','omitnan');
 
+    OUT.RMSE_ci_lower(i) = OUT.RMSE_test(i) - OUT.RMSE_SD_test(i) * t_value;
+    OUT.RMSE_ci_upper(i) = OUT.RMSE_test(i) + OUT.RMSE_SD_test(i) * t_value;
+    if(ERRoutlierflag)
+        if(OUT.RMSE_ci_upper(i)>outlthr)
+            OUT.RMSE_ci_upper(i)=outlthr;
+        end
+    end
+
     %% dimensionality
     OUT.DIM_avrg(i,:)=mean(DIM{i},'omitnan');
     OUT.DIM_std(i,:)=std(DIM{i},'omitnan')/sqrt(Nreal);
 
+    OUT.DIM_ci_lower(i) = OUT.DIM_avrg(i) - OUT.DIM_std(i) * t_value;
+    OUT.DIM_ci_upper(i) = OUT.DIM_avrg(i) + OUT.DIM_std(i) * t_value;
+
     %% FT dimensionality
     OUT.DIM_FT_avrg(i,:)=mean(DIM_FT{i},'omitnan');
     OUT.DIM_FT_std(i,:)=std(DIM_FT{i},'omitnan')/sqrt(Nreal);
+
+    OUT.DIM_FT_ci_lower(i) = OUT.DIM_FT_avrg(i) - OUT.DIM_FT_std(i) * t_value;
+    OUT.DIM_FT_ci_upper(i) = OUT.DIM_FT_avrg(i) + OUT.DIM_FT_std(i) * t_value;
 
     %% Condition number
     OUT.COND_avrg(i,:)=mean(COND{i},'omitnan');
     OUT.COND_std(i,:)=std(COND{i},'omitnan')/sqrt(Nreal);
     OUT.COND_TOTAL_avrg(i,:)=mean(COND_TOTAL{i},'omitnan');
     OUT.COND_TOTAL_std(i,:)=std(COND_TOTAL{i},'omitnan')/sqrt(Nreal);
+
+    OUT.COND_ci_lower(i) = OUT.COND_avrg(i) - OUT.COND_std(i) * t_value;
+    OUT.COND_ci_upper(i) = OUT.COND_avrg(i) + OUT.COND_std(i) * t_value;
+
+    OUT.COND_TOTAL_ci_lower(i) = OUT.COND_TOTAL_avrg(i) - OUT.COND_TOTAL_std(i) * t_value;
+    OUT.COND_TOTAL_ci_upper(i) = OUT.COND_TOTAL_avrg(i) + OUT.COND_TOTAL_std(i) * t_value;
 
     %% full Floquet multiplier distributions
     OUT.FLOQUET_distrb(i,:)=FLOQUET{i}(:,1);
@@ -771,33 +823,72 @@ for i=1:Npara
     %% fraction of maximum Floquet multiplier > threshold
     OUT.FLOQUET_frac(i)=mean(FLOQUET{i}(:,1)>parameters.FMcutoff);
 
-    %% Subspace angles  
+    z = norminv(0.975);  % 95% confidence level
+
+    % Wilson confidence interval for a binomial proportion
+    denom = 1 + z^2 ./ Nreal;
+    center = (OUT.FLOQUET_frac(i) + z^2 ./ (2*Nreal)) ./ denom;
+    half_width = (z ./ denom) .* sqrt(OUT.FLOQUET_frac(i) .* (1-OUT.FLOQUET_frac(i)) ./ Nreal + z^2 ./ (4*Nreal.^2));
+
+    OUT.FLOQUET_frac_ci_lower(i) = center - half_width;
+    OUT.FLOQUET_frac_ci_upper(i) = center + half_width;
+
+    %% Principal angles
     OUT.PRINCIPAL_ANGLES_avrg(i,:)=mean(PRINCIPAL_ANGLES{i},'omitnan');
     OUT.PRINCIPAL_ANGLES_std(i,:)=std(PRINCIPAL_ANGLES{i},'omitnan')/sqrt(Nreal);
+
+    OUT.PRINCIPAL_ANGLES_ci_lower(i,:) = OUT.PRINCIPAL_ANGLES_avrg(i,:) - OUT.PRINCIPAL_ANGLES_std(i,:) * t_value;
+    OUT.PRINCIPAL_ANGLES_ci_upper(i,:) = OUT.PRINCIPAL_ANGLES_avrg(i,:) + OUT.PRINCIPAL_ANGLES_std(i,:) * t_value;
     
     %% spanning vector angles
     OUT.ANGLES_avrg(i,:,:)=mean(ANGLES{i},3,'omitnan');
     OUT.ANGLES_std(i,:,:)=std(ANGLES{i},0,3,'omitnan')/sqrt(Nreal);
 
+    OUT.ANGLES_ci_lower(i,:,:) = OUT.ANGLES_avrg(i,:,:) - OUT.ANGLES_std(i,:,:) * t_value;
+    OUT.ANGLES_ci_upper(i,:,:) = OUT.ANGLES_avrg(i,:,:) + OUT.ANGLES_std(i,:,:) * t_value;
+
     %% spanning vector norms
     OUT.NORMS_avrg(i,:)=mean(NORMS{i},'omitnan');
     OUT.NORMS_std(i,:)=std(NORMS{i},'omitnan')/sqrt(Nreal);
 
+    %% average task-relevant vector norm
+    sidx=1:2:(2*Ncomp);
+    OUT.NORMS_task_avrg(i)=mean(OUT.NORMS_avrg(i,sidx+1));
+    OUT.NORMS_task_std(i)=sqrt(sum(OUT.NORMS_std(i,sidx+1).^2))/Ncomp;
+    
+    OUT.NORMS_task_ci_lower(i) = OUT.NORMS_task_avrg(i) - OUT.NORMS_task_std(i) * t_value;
+    OUT.NORMS_task_ci_upper(i) = OUT.NORMS_task_avrg(i) + OUT.NORMS_task_std(i) * t_value;
+
     %% correlation between spanning vector
     OUT.R_avrg(i,:,:)=mean(R{i},3,'omitnan');
+    OUT.R_std(i,:,:)=std(R{i},0,3,'omitnan')/sqrt(Nreal);
+
+    OUT.R_ci_lower(i,:,:) = OUT.R_avrg(i,:,:) - OUT.R_std(i,:,:) * t_value;
+    OUT.R_ci_upper(i,:,:) = OUT.R_avrg(i,:,:) + OUT.R_std(i,:,:) * t_value;
 
     %% readout weight norms
     OUT.WNORM_avrg(i)=mean(WNORM{i},'omitnan');
     OUT.WNORM_std(i)=std(WNORM{i},'omitnan')/sqrt(Nreal);
 
-    %% readout weight norm denominator
-    % sin_signal_angles=[];
-    % for k=1:2:(2*Ncomp)
-    %     for j=1:2:(k-1)
-    %         sin_signal_angles=[sin_signal_angles, sind(OUT.ANGLES_avrg(i,k+1,j+1))];
-    %     end
-    % end
+    %% task-relevant sine product
     OUT.SINEPROD_SIGNAL_avrg(i)=mean(SINEPROD_SIGNAL{i},'omitnan');
+
+    %% fullsine product
+    for rr=1:Nreal
+        sub_ang=sind(PRINCIPAL_ANGLES{i}(rr,:));
+        sig_ang=[];
+        for k=1:2:(2*Ncomp)
+            for j=1:2:(k-1)
+                sig_ang=[sig_ang, sind(ANGLES{i}(k+1,j+1,rr))];
+            end
+        end
+        prod_ang(rr)=prod([sub_ang,sig_ang]);
+    end
+    OUT.FULLSINEPROD_avrg(i)=mean(prod_ang,'omitnan');
+    OUT.FULLSINEPROD_std(i)=std(prod_ang,'omitnan')/sqrt(Nreal);
+    
+    OUT.FULLSINE_ci_lower(i) = OUT.FULLSINEPROD_avrg(i) - OUT.FULLSINEPROD_std(i) * t_value;
+    OUT.FULLSINE_ci_upper(i) = OUT.FULLSINEPROD_avrg(i) + OUT.FULLSINEPROD_std(i) * t_value;
 
     %% general stats
     tmp= varfun(@nanmean, STATS{i},"InputVariables",STATS{i}.Properties.VariableNames); %#ok<NANMEAN>
@@ -875,7 +966,7 @@ tmp=vertcat(FLOQUET{:});
 OUT.FLOQUET_avrg=mean(tmp,'all','omitnan')*ones(Npara,1);
 OUT.FLOQUET_std=std(tmp,0,'all','omitnan')/sqrt(Npara*Nreal)*ones(Npara,1);
 
-%% Principal angles
+%% Subspace angles
 tmp=vertcat(PRINCIPAL_ANGLES{:});
 for i=1:size(tmp,2)
     OUT.PRINCIPAL_ANGLES_avrg(:,i)=mean(tmp(:,i),'all','omitnan')*ones(Npara,1);
@@ -885,6 +976,7 @@ end
 end
 
 function Set_CCxC_scan_FigureProperties(ah,X,plotpara)
+% ah = axis handle
 
 if(plotpara.sNflag==1)
     set(ah, 'XScale', 'log');

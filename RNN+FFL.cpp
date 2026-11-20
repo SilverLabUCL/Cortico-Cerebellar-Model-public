@@ -98,8 +98,8 @@ int main (int argc, char* argv[]) {
 	std::ofstream nuFFL_test_file(para.path+"nuFFL_test.dat");			if (!nuFFL_test_file) exit(EXIT_FAILURE);
 	std::ofstream nuFFL_openloop_file(para.path+"nuFFL_openloop.dat");				if (!nuFFL_openloop_file) exit(EXIT_FAILURE);
 
-	std::ofstream S_total_ctx_file(para.path+"stotal_RNN.dat");		if (!S_total_ctx_file) exit(EXIT_FAILURE);
-	std::ofstream S_total_cereb_file(para.path+"stotal_FFL.dat");	if (!S_total_cereb_file) exit(EXIT_FAILURE);
+	std::ofstream S_total_RNN_file(para.path+"stotal_RNN.dat");		if (!S_total_RNN_file) exit(EXIT_FAILURE);
+	std::ofstream S_total_FFL_file(para.path+"stotal_FFL.dat");	if (!S_total_FFL_file) exit(EXIT_FAILURE);
 
 	std::ofstream simcount_file(para.path+"simcount.dat");				if (!simcount_file) exit(EXIT_FAILURE);
 
@@ -257,10 +257,10 @@ int main (int argc, char* argv[]) {
 	arma::colvec OUTvec(para.Tmax_learn);
 	arma::colvec Target(para.Tmax_learn);
 
-	arma::running_stat<double> stats_hcx;
-	arma::running_stat<double> stats_nuCx;
-	arma::running_stat<double> stats_hgc;
-	arma::running_stat<double> stats_GC;
+	arma::running_stat<double> stats_hRNN;
+	arma::running_stat<double> stats_nuRNN;
+	arma::running_stat<double> stats_hFFL;
+	arma::running_stat<double> stats_nuFFL;
 	arma::running_stat<double> stats_rmse;
 //------------------------------------------------------------------------
 // 	generate target signal(s)
@@ -565,7 +565,7 @@ int main (int argc, char* argv[]) {
 		// set loop parameter
 		para.closedloop=1;		// closed loop
 		para.testphaseflag=0;	// no noise
-		if(para.LRflag=1) 	para.RKflag=1;		// Runke-Kutta integration for DELTA
+		if(para.LRflag==1) 	para.RKflag=1;		// Runke-Kutta integration for DELTA
 		else 				para.RKflag=0;		// Euler integration for RLS
 		log_file << "\t \t \t RLS/DELTA learning phase"<< "\t RKflag = "<< para.RKflag <<  "\t testphaseflag = "<< para.testphaseflag << " \t closedloop = "<< para.closedloop << std::endl;
 		RMSE_train=para.error_signed_train=0;
@@ -791,7 +791,7 @@ int main (int argc, char* argv[]) {
 //	*************************
 // 	Calculate norm of output weights
 //	*************************
-	double Wnorm_cereb=calc_wnorm(para.Wout_PC);
+	double Wnorm_FFL=calc_wnorm(para.Wout_PC);
 
 //	**************************************************
 // 	Calculate Fourier components
@@ -810,8 +810,8 @@ int main (int argc, char* argv[]) {
 	for(int i= 0; i < para.Ncx+para.Ngc; i++) {
 		X[i]=X_save[i];
 	}
-	stats_hcx.reset(); 	stats_nuCx.reset();
-	stats_hgc.reset(); 	stats_GC.reset();
+	stats_hRNN.reset(); 	stats_nuRNN.reset();
+	stats_hFFL.reset(); 	stats_nuFFL.reset();
 	time=0;
 
 	tt=para.Tmax_trans;
@@ -859,12 +859,12 @@ int main (int argc, char* argv[]) {
 		para.PC =func_target(time, para);
 
 		for(int i= 0; i < para.Ncx; i++){
-			stats_hcx(hcx[i]);
-			stats_nuCx(para.nuCx[i]);
+			stats_hRNN(hcx[i]);
+			stats_nuRNN(para.nuCx[i]);
 		}
 		// cerebellar population
 		for(int i= 0; i < para.Ngc; i++){
-			stats_hgc(para.hGC[i]);	stats_GC(para.nuGC[i]);
+			stats_hFFL(para.hGC[i]);	stats_nuFFL(para.nuGC[i]);
 			if(std::fabs(para.nuGC[i])>0.01)	{
 				fsparse[i]+=1.0;
 				fsparse_pop[t]+=1.0;
@@ -909,22 +909,22 @@ int main (int argc, char* argv[]) {
 
 	// calculate fluctuation of population mean
 	nuGC_avrg_pop=nuGC_avrg_pop/double(para.Ngc);
-	double nuGC_avrg_std=arma::stddev(nuGC_avrg_pop);
-	double nuGC_avrg_cv=nuGC_avrg_std/arma::mean(nuGC_avrg_pop);
+	double nuFFL_avrg_std=arma::stddev(nuGC_avrg_pop);
+	double nuFFL_avrg_cv=nuFFL_avrg_std/arma::mean(nuGC_avrg_pop);
 
 	// write stats to file
 	std::ofstream stats_file(para.folder+"stats.json");		if (!stats_file) exit(EXIT_FAILURE);
 
-	json_stats["hcx_mean"].push_back(stats_hcx.mean());
-	json_stats["hcx_std"].push_back(stats_hcx.stddev());
-	json_stats["nucx_mean"].push_back(stats_nuCx.mean());
-	json_stats["nucx_std"].push_back(stats_nuCx.stddev());
-	json_stats["hgc_mean"].push_back(stats_hgc.mean());
-	json_stats["hgc_std"].push_back(stats_hgc.stddev());
-	json_stats["gc_mean"].push_back(stats_GC.mean());
-	json_stats["gc_std"].push_back(stats_GC.stddev());
-	json_stats["gc_pop_std"].push_back(nuGC_avrg_std);
-	json_stats["gc_pop_cv"].push_back(nuGC_avrg_cv);
+	json_stats["hcx_mean"].push_back(stats_hRNN.mean());
+	json_stats["hcx_std"].push_back(stats_hRNN.stddev());
+	json_stats["nucx_mean"].push_back(stats_nuRNN.mean());
+	json_stats["nucx_std"].push_back(stats_nuRNN.stddev());
+	json_stats["hgc_mean"].push_back(stats_hFFL.mean());
+	json_stats["hgc_std"].push_back(stats_hFFL.stddev());
+	json_stats["gc_mean"].push_back(stats_nuFFL.mean());
+	json_stats["gc_std"].push_back(stats_nuFFL.stddev());
+	json_stats["gc_pop_std"].push_back(nuFFL_avrg_std);
+	json_stats["gc_pop_cv"].push_back(nuFFL_avrg_cv);
 	json_stats["f_mean"].push_back(fmean);
 	json_stats["f_std"].push_back(fstd);
 	json_stats["f_min"].push_back(fmin);
@@ -941,10 +941,10 @@ int main (int argc, char* argv[]) {
 
 	// calculate Fourier components & FT dimensionality
 	log_file << "\t \t \t Fourier analysis" << std::endl;
-	FTcomp FTcomp_ctx;
-	FTcomp FTcomp_cereb;
-	calc_FT(RATES_FT, FTcomp_ctx, para, para.Tmax_FT,"ctx");
-	calc_FT(RATES_FT_GC, FTcomp_cereb, para, para.Tmax_FT,"cereb");
+	FTcomp FTcomp_RNN;
+	FTcomp FTcomp_FFL;
+	calc_FT(RATES_FT, FTcomp_RNN, para, para.Tmax_FT,"ctx");
+	calc_FT(RATES_FT_GC, FTcomp_FFL, para, para.Tmax_FT,"cereb");
 
 	// calculate dimensionality
 	log_file << "\t \t \t Calculate dimensionality" << std::endl;
@@ -954,15 +954,15 @@ int main (int argc, char* argv[]) {
 	// write to files: ctx
 	log_file << "\t \t \t Write population measures to files"<< std::endl;
 	json_measures["DIM_ctx"].push_back(DIM_ctx);
-	json_measures["DIM_FT_ctx"].push_back(FTcomp_ctx.dim_signal);
-	json_measures["COND_ctx"].push_back(FTcomp_ctx.cond_signal);
-	json_measures["COND_total_ctx"].push_back(FTcomp_ctx.cond_total);
+	json_measures["DIM_FT_ctx"].push_back(FTcomp_RNN.dim_signal);
+	json_measures["COND_ctx"].push_back(FTcomp_RNN.cond_signal);
+	json_measures["COND_total_ctx"].push_back(FTcomp_RNN.cond_total);
 
 	// write to files: cereb
 	json_measures["DIM_cereb"].push_back(DIM_cereb);
-	json_measures["DIM_FT_cereb"].push_back(FTcomp_cereb.dim_signal);
-	json_measures["COND_cereb"].push_back(FTcomp_cereb.cond_signal);
-	json_measures["COND_total_cereb"].push_back(FTcomp_cereb.cond_total);
+	json_measures["DIM_FT_cereb"].push_back(FTcomp_FFL.dim_signal);
+	json_measures["COND_cereb"].push_back(FTcomp_FFL.cond_signal);
+	json_measures["COND_total_cereb"].push_back(FTcomp_FFL.cond_total);
 
 //	*************************
 // 	write output to files
@@ -1045,8 +1045,8 @@ int main (int argc, char* argv[]) {
 		}
 
 		// spanning vectors
-		FTcomp_ctx.S_total.save(S_total_ctx_file, arma::raw_ascii);
-		FTcomp_cereb.S_total.save(S_total_cereb_file, arma::raw_ascii);
+		FTcomp_RNN.S_total.save(S_total_RNN_file, arma::raw_ascii);
+		FTcomp_FFL.S_total.save(S_total_FFL_file, arma::raw_ascii);
 
 		// Save file
 		std::ofstream single_trial_file(para.folder + "weights_single_trial.json"); if (!single_trial_file) exit(EXIT_FAILURE);
@@ -1057,7 +1057,7 @@ int main (int argc, char* argv[]) {
 
 	bool write_FULL=1;
 	log_file << "\t \t \t Write summary data to files"<< std::endl;
-	write_measures_final(json_measures, FTcomp_cereb, RMSE_train, RMSE_test, Wnorm_cereb, "cereb", para, write_FULL);
+	write_measures_final(json_measures, FTcomp_FFL, RMSE_train, RMSE_test, Wnorm_FFL, "cereb", para, write_FULL);
 
 	simcount_file << 1 << std::endl;
 
@@ -1076,8 +1076,8 @@ int main (int argc, char* argv[]) {
 	nuFFL_test_file.close();
 	nuFFL_openloop_file.close();
 
-	S_total_ctx_file.close();
-	S_total_cereb_file.close();
+	S_total_RNN_file.close();
+	S_total_FFL_file.close();
 
 	log_file.close();
 	simcount_file.close();

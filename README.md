@@ -1,11 +1,10 @@
 # [PAPER TITLE]: simulation and analysis code
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![License: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
 [![Data: CC BY 4.0](https://img.shields.io/badge/data-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 C++ simulation code and MATLAB analysis scripts accompanying the manuscript
-**"[PAPER TITLE]"** by [AUTHORS] ([preprint link / DOI], submitted to [JOURNAL]).
+**"Geometric determinants of time series learning and attractor stability in closed-loop circuits"** by [Alessandro Barri, Harsha Gurnani and R. Angus Silver] (https://doi.org/10.64898/2026.11.10.765266).
 
 > **Maintainer notes (delete before publishing).** Replace every `[PLACEHOLDER]` and `TODO`.
 > Items marked **[CONFIRM]** are my best reading of your notes.
@@ -15,12 +14,15 @@ C++ simulation code and MATLAB analysis scripts accompanying the manuscript
 > - [ ] Overview paragraph and model descriptions (Section 1)
 > - [ ] List all `--learnmode` values and write the parameter descriptions (Section 5, `docs/PARAMETERS.md`)
 > - [ ] Full option lists of the MATLAB plotting scripts, or a pointer to header comments in the scripts (Section 8)
-> - [ ] What `fig_Wout_2S_1N_release.m` needs as input, and how its MATLAB command is provided in the Zenodo archive (Sections 8 and 9)
-> - [ ] Figure table: figure -> Zenodo data -> MATLAB script (Section 9)
-> - [ ] Zenodo DOI, contents, size, folder layout and where to unpack (Sections 9 and 10)
+> - [ ] What `fig_Wout_2S_1N_release.m` needs as input, and how its MATLAB command is provided in the figshare archive (Sections 8 and 9)
+> - [ ] Figure table: figure -> figshare data -> MATLAB script (Section 9)
+> - [ ] figshare data record: DOI, contents, size, folder layout, where to unpack, and how its versions relate to the code releases (Sections 9 and 10)
+> - [ ] Confirm the data license (CC BY 4.0?) is the one used on figshare/UCL (Sections 10 and 15)
+> - [ ] Publish the GitHub release `v1.0.0` and fill in its commit hash (Sections 10 and 16)
+> - [ ] Check the journal's policy on code availability (is a GitHub link enough, or is an archived copy with a DOI required?) (Section 10)
 > - [ ] Dockerfile: fill in the SHA-256 checksums, optionally pin the base image by digest, commit `Dockerfile` and `.dockerignore` (Section 13)
 > - [ ] Paper title, authors, DOIs, BibTeX, contact, funding (Sections 1, 16, 17)
-> - [ ] Add `CITATION.cff` and tag the release (e.g. `v1.0-paper`)
+> - [ ] Fill in `CITATION.cff` (used by GitHub's "Cite this repository" button)
 > - [ ] Optional / low priority: reference output and check script (Section 6)
 > </details>
 
@@ -37,7 +39,7 @@ C++ simulation code and MATLAB analysis scripts accompanying the manuscript
 7. [Output files](#7-output-files)
 8. [MATLAB workflow](#8-matlab-workflow)
 9. [Reproducing the paper](#9-reproducing-the-paper)
-10. [Data (Zenodo)](#10-data-zenodo)
+10. [Code and data availability](#10-code-and-data-availability)
 11. [Computational resources and runtime](#11-computational-resources-and-runtime)
 12. [Reproducibility notes](#12-reproducibility-notes)
 13. [Docker](#13-docker)
@@ -62,8 +64,8 @@ The repository contains:
 - a text file (`figure_sim_commands.txt`) listing the console commands for the simulations of each figure in the paper,
 - a Dockerfile that builds a ready-to-run environment with all dependencies.
 
-The repository does **not** contain the raw simulation output of the paper. The processed data
-behind each figure are archived on Zenodo (see [Data](#10-data-zenodo)).
+The repository does not contain the raw simulation output of the paper. The processed data
+behind each figure are archived on figshare (see [Code and data availability](#10-code-and-data-availability)).
 
 ## 2. Repository structure
 
@@ -170,8 +172,6 @@ Before running either program, set the number of OpenMP threads (the paper simul
 ```bash
 export OMP_NUM_THREADS=6
 ```
-
-The thread count changes only the runtime, not the numerical results.
 
 ## 5. Running the program
 
@@ -297,7 +297,7 @@ Learning Toolbox.
 | `fig_RNN_scan_release.m` | Analyses and plots **RNN_only parameter sweeps** (e.g. test command 3). Averages measures extracted from the simulations over multiple realisations and plots, for example, average output errors, principal angles, norms and Floquet multipliers in multiple panels. Reads the struct created by `read_simulations_release.m`. |
 | `fig_RNN_FFL_scan_release.m` | Same as `fig_RNN_scan_release.m`, for **RNN+FFL** sweeps (e.g. test command 4). |
 | `fig_multi_scan_release.m` | Data analysis and plotting from **several structs**, allowing multiple curves in the same panel. |
-| `fig_Wout_2S_1N_release.m` | Recreates **Supplementary Fig. 2**. The command to run it is provided in the Zenodo archive together with the other figure commands. |
+| `fig_Wout_2S_1N_release.m` | Recreates **Supplementary Fig. 2**. The command to run it is provided in the figshare archive together with the other figure commands. |
 | `findIntersect.m` | Helper routine used by the plotting scripts to find the stability margins obtained from the Floquet analysis. |
 
 ### Example calls
@@ -346,9 +346,9 @@ fig_multi_scan_release('data', MAT_STRUCT_1, MAT_STRUCT_2, 'RMSE log axis', [1e-
 
 The file **`figure_sim_commands.txt`** lists the console commands used for the simulations of
 each figure in the paper. The commands to generate Supplementary Fig. 2 with
-`fig_Wout_2S_1N_release.m` are provided in the Zenodo archive ([Section 10](#10-data-zenodo)).
+`fig_Wout_2S_1N_release.m` are provided in the figshare archive ([Section 10](#10-code-and-data-availability)).
 
-| Figure | Data (Zenodo) | MATLAB script |
+| Figure | Data (figshare) | MATLAB script |
 |---|---|---|
 | Fig. 1 | [file] | [script] |
 | Fig. 3 | [file] | [script] |
@@ -358,25 +358,34 @@ each figure in the paper. The commands to generate Supplementary Fig. 2 with
 
 There are two ways to proceed:
 
-- **(a) Regenerate the figures from the processed data (fast).** Download the data from Zenodo
-  ([Section 10](#10-data-zenodo)) and run the plotting scripts. No C++ compilation is needed.
+- **(a) Regenerate the figures from the processed data (fast).** Download the data from figshare
+  ([Section 10](#10-code-and-data-availability)) and run the plotting scripts. No C++ compilation is needed.
 - **(b) Rerun the simulations (slow).** Compile the programs (or use the Docker image), run the
   relevant commands from `figure_sim_commands.txt`, then run the MATLAB scripts on the new
   output. Expect runtimes of up to several hours per figure
   ([Section 11](#11-computational-resources-and-runtime)).
 
-## 10. Data (Zenodo)
+## 10. Code and data availability
 
-The processed data used to generate the figures are archived at
-**[https://doi.org/10.5281/zenodo.XXXXXXX](https://doi.org/10.5281/zenodo.XXXXXXX)** (license: CC BY 4.0).
+### Code (GitHub)
+
+The code is available at https://github.com/LAB/REP. The version used in the paper is the
+release tagged **`[v1.0.0]`** (commit `[COMMIT HASH]`):
+https://github.com/LAB/REP/releases/tag/[v1.0.0]. Later versions (for example after revision)
+get their own tags; the release notes say which version corresponds to which stage of the
+paper (submitted, revised, accepted).
+
+### Data (figshare)
+
+The processed data used to generate the figures are archived on figshare at
+**[https://doi.org/[FIGSHARE DOI]](https://doi.org/[FIGSHARE DOI])** (license: CC BY 4.0 **[CONFIRM]**).
 
 - **Contents:** processed figure data (text files) and [CONFIRM: the MATLAB commands for generating the figures]. Raw simulation output is *not* included.
 - **Size:** [TODO]
 - **Download and placement:** [TODO: e.g. unpack into `data/` in the repository root, and state
   which path the MATLAB scripts expect]
-- The code in this repository is archived on Zenodo through the GitHub integration. Use the
-  **version DOI** of the release tagged `[v1.0-paper]` to cite the exact code used in the paper;
-  the concept DOI always points to the latest version.
+- **Versions:** [TODO: state which version of the data record matches which code release, and
+  which version DOI to cite for the exact data used in the paper]
 
 ## 11. Computational resources and runtime
 
@@ -397,19 +406,15 @@ Disk space: small; the whole repository including the simulated data is typicall
 
 ## 12. Reproducibility notes
 
-- Results are deterministic given a random number seed (`--seed`); `--seed -1` is a fixed seed
-  and gives the same output on every run on a given machine.
-- The number of OpenMP threads (`OMP_NUM_THREADS`) affects only the runtime, not the numerical results.
+- Results are deterministic given a random number seed (`--seed`).
 - The simulation results obtained with the Docker image match those from the native Ubuntu 24.04
   installation described in [Section 3](#3-requirements).
-- Small numerical differences can occur across machines, compilers or BLAS/LAPACK implementations.
-  [TODO: state the expected size of such differences, if known.]
-
+  
 ## 13. Docker
 
 The [`Dockerfile`](Dockerfile) builds an image based on Ubuntu 24.04 with g++, Boost, OpenBLAS,
 GSL 2.8 and Armadillo 14.4.0 (the last two built from source), and compiles both programs with
-the commands from [Section 4](#4-compilation). MATLAB is **not** included (it is proprietary
+the commands from [Section 4](#4-compilation). MATLAB is not included (it is proprietary
 software); run the MATLAB scripts on the host machine, on the output written by the container.
 The image was tested on x86-64 Ubuntu 24.04; other architectures were not tested.
 
@@ -460,11 +465,11 @@ MAT_STRUCT = read_simulations_release('results/');
 
 - **Code:** MIT (see [`LICENSE`](LICENSE)). The bundled `headers/json.hpp` is from
   [nlohmann/json](https://github.com/nlohmann/json) (MIT license).
-- **Data on Zenodo:** CC BY 4.0.
+- **Data on figshare:** CC BY 4.0 **[CONFIRM]**.
 
 ## 16. How to cite
 
-If you use this code or data, please cite the paper and the archived code release:
+If you use this code or data, please cite the paper, the code release and the data:
 
 ```bibtex
 @article{[KEY],
@@ -476,12 +481,5 @@ If you use this code or data, please cite the paper and the archived code releas
 }
 ```
 
-Code (version DOI): [Zenodo version DOI]
-Data: [Zenodo DOI]
-
-## 17. Contact and acknowledgements
-
-Questions and bug reports: please open an issue at https://github.com/LAB/REP/issues
-or contact [NAME, EMAIL].
-
-Funding: [FUNDING]. [Other acknowledgements.]
+Code: https://github.com/LAB/REP, release [v1.0.0] (commit [COMMIT HASH])
+Data (figshare): [figshare DOI]

@@ -124,7 +124,7 @@ if(flags.learnflag<3)
 
     % Read spanning vectors
     data.stotal = checkopen([path_sim, 'stotal_RNN.dat']);
-    if CORTEXONLY == 0
+    if (CORTEXONLY == 0)
         data.stotal = checkopen([path_sim, 'stotal_FFL.dat']);
     end
 

@@ -163,9 +163,9 @@ void target_signal(netpara &para, nlohmann::json &json_parameters,  std::ofstrea
 			json_amp_tmp.push_back(amp_intf(j));
 			json_phase_tmp.push_back(phase_intf(j));
 		}
-		json_parameters["frequency_inft"].push_back(json_freq_tmp);
-		json_parameters["amp_inft"].push_back(json_amp_tmp);
-		json_parameters["phase_inft"].push_back(json_phase_tmp);
+		json_parameters["frequency_intf"].push_back(json_freq_tmp);
+		json_parameters["amp_intf"].push_back(json_amp_tmp);
+		json_parameters["phase_intf"].push_back(json_phase_tmp);
 	}
 	// zero signal
 	else if(para.signalflag==-1){

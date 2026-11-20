@@ -69,7 +69,7 @@ double calc_FT_cond(arma::mat &Space, double tol){
 }
 
 // calculates spanning vetcor components via FT
-void FTcomponents(FTcomp &Cmp, arma::mat &RATE, arma::vec &cleantol,netpara &para, int FT_tsteps, int Ncomp_total, int cleanflag, int writeflag, std::string modeflag){
+void FTcomponents(FTcomp &Cmp, arma::mat &RATE,netpara &para, int FT_tsteps, int Ncomp_total){
 
 	// baseline frequency
 	double w=para.lambda;
@@ -90,41 +90,8 @@ void FTcomponents(FTcomp &Cmp, arma::mat &RATE, arma::vec &cleantol,netpara &par
 	arma::cx_mat FT =  arma::fft(RATE.t())/double(Nthalf);
 	FT.shed_rows( Nthalf, FT_tsteps-1 );
 
-	// clean up Fourier components
-	if(cleanflag==1) {
-		arma::vec P;
-		for (int i = 0; i < N; i++) {
-			arma::cx_vec tmp=FT.col(i);
-			P=arma::abs(tmp) % arma::abs(tmp);
-			for (int f = 0; f < Nthalf; f++) {
-				if(P(f)<cleantol(i)) FT.at(f,i)=1e-6;
-			}
-		}
-
-	}
-	// calculate properties of error spectrum
-	else{
-		for (int i = 0; i < N; i++) {
-			arma::cx_vec tmp=FT.col(i);
-			arma::vec P=arma::abs(tmp.subvec( Nthalf/2-1, Nthalf-1 ));
-			P=P % P;
-			double tailmean=arma::mean(P);
-			double tailstd=arma::stddev(P);
-			cleantol(i)=tailmean+3*tailstd;		// remove < 3 times STD
-		}
-	}
-
 	arma:: mat rr=arma::real(FT.t());
 	arma:: mat ii=arma::imag(FT.t());
-
-	//~ if(para.learnflag<99 && writeflag==1) {
-		//~ std::ofstream FT_real_file(para.folder+"FT_real_" + modeflag +".txt");		if (!FT_real_file) exit(EXIT_FAILURE);
-		//~ rr.save(FT_real_file,arma::raw_ascii);
-		//~ FT_real_file.close();
-		//~ std::ofstream FT_imag_file(para.folder+"FT_imag_" + modeflag +".txt");		if (!FT_imag_file) exit(EXIT_FAILURE);
-		//~ ii.save(FT_imag_file,arma::raw_ascii);
-		//~ FT_imag_file.close();
-	//~ }
 
 	Cmp.a0=rr.col(0)/2.0;
 	// find peaks at integer multiples of the baseline frequency
@@ -173,7 +140,6 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 		// non-linear tanh RNN
 		//~ else if(para.actfuncflag==0)	Ncomp_noise=6;
 		else if(para.actfuncflag==0)	Ncomp_noise=para.Ncomp_noise_RNN;
-		//~ Ncomp_noise=std::max(para.Ncomp_intf-1,0);
 	}
     else if (modeflag == "cereb"){
 		// linear GCs without artificial overtones
@@ -200,12 +166,7 @@ void calc_FT(arma::mat RATE, FTcomp &Cmp, netpara &para, int FT_tsteps, std::str
 
 	//	*************************
 	// 	Fourier transforms
-	int writeflag;
-	int cleanflag;
-	arma::vec cleantol=arma::zeros<arma::vec>(N);
-
-	writeflag=1; cleanflag=0;
-	FTcomponents(Cmp, RATE, cleantol, para, FT_tsteps, Ncomp_total,cleanflag,writeflag,modeflag+"_cleaned");
+	FTcomponents(Cmp, RATE, para, FT_tsteps, Ncomp_total);
 
 	//	*************************
 	// clean up fourier components

@@ -89,7 +89,7 @@ int main (int argc, char* argv[]) {
 	std::ofstream nuRNN_test_file(para.path+"nuRNN_test.dat");		if (!nuRNN_test_file) exit(EXIT_FAILURE);
 	std::ofstream nuRNN_openloop_file(para.path+"nuRNN_openloop.dat");			if (!nuRNN_openloop_file) exit(EXIT_FAILURE);
 
-	std::ofstream S_total_ctx_file(para.path+"stotal_RNN.dat");		if (!S_total_ctx_file) exit(EXIT_FAILURE);
+	std::ofstream S_total_RNN_file(para.path+"stotal_RNN.dat");		if (!S_total_RNN_file) exit(EXIT_FAILURE);
 
 	std::ofstream simcount_file(para.path+"simcount.dat");				if (!simcount_file) exit(EXIT_FAILURE);
 
@@ -206,8 +206,8 @@ int main (int argc, char* argv[]) {
 	arma::colvec OUTvec(para.Tmax_learn);
 	arma::colvec Target(para.Tmax_learn);
 
-	arma::running_stat<double> stats_hcx;
-	arma::running_stat<double> stats_nuCx;
+	arma::running_stat<double> stats_hRNN;
+	arma::running_stat<double> stats_nuRNN;
 	arma::running_stat<double> stats_rmse;
 //------------------------------------------------------------------------
 // 	generate target signal(s)
@@ -547,7 +547,7 @@ int main (int argc, char* argv[]) {
 	for(int i= 0; i < para.Ncx; i++) {
 		hcx[i]=hcx_save[i];
 	}
-	stats_hcx.reset(); 	stats_nuCx.reset();
+	stats_hRNN.reset(); 	stats_nuRNN.reset();
 	time=0;
 
 	tt=para.Tmax_trans;
@@ -577,8 +577,8 @@ int main (int argc, char* argv[]) {
 		para.Z =func_target(time, para);
 
 		for(int i= 0; i < para.Ncx; i++){
-			stats_hcx(hcx[i]);
-			stats_nuCx(para.nuCx[i]);
+			stats_hRNN(hcx[i]);
+			stats_nuRNN(para.nuCx[i]);
 			nuCx_avrg_pop[t]+=para.nuCx[i];
 		}
 
@@ -607,10 +607,10 @@ int main (int argc, char* argv[]) {
 	// write stats to file
 	std::ofstream stats_file(para.folder+"stats.json");		if (!stats_file) exit(EXIT_FAILURE);
 
-	json_stats["hcx_mean"].push_back(stats_hcx.mean());
-	json_stats["hcx_std"].push_back(stats_hcx.stddev());
-	json_stats["nucx_mean"].push_back(stats_nuCx.mean());
-	json_stats["nucx_std"].push_back(stats_nuCx.stddev());
+	json_stats["hcx_mean"].push_back(stats_hRNN.mean());
+	json_stats["hcx_std"].push_back(stats_hRNN.stddev());
+	json_stats["nucx_mean"].push_back(stats_nuRNN.mean());
+	json_stats["nucx_std"].push_back(stats_nuRNN.stddev());
 	json_stats["nucx_pop_std"].push_back(nuCx_avrg_std);
 	json_stats["nucx_pop_cv"].push_back(nuCx_avrg_cv);
 
@@ -619,8 +619,8 @@ int main (int argc, char* argv[]) {
 
 	// calculate Fourier components & FT dimensionality
 	log_file << "\t \t \t Fourier analysis" << std::endl;
-	FTcomp FTcomp_ctx;
-	calc_FT(RATES_FT, FTcomp_ctx, para, para.Tmax_FT,"ctx");
+	FTcomp FTcomp_RNN;
+	calc_FT(RATES_FT, FTcomp_RNN, para, para.Tmax_FT,"ctx");
 
 	// calculate dimensionality
 	log_file << "\t \t \t Calculate dimensionality" << std::endl;
@@ -629,9 +629,9 @@ int main (int argc, char* argv[]) {
 	// write to files: ctx
 	log_file << "\t \t \t Write population measures to files"<< std::endl;
 	json_measures["DIM_ctx"].push_back(DIM_ctx);
-	json_measures["DIM_FT_ctx"].push_back(FTcomp_ctx.dim_signal);
-	json_measures["COND_ctx"].push_back(FTcomp_ctx.cond_signal);
-	json_measures["COND_total_ctx"].push_back(FTcomp_ctx.cond_total);
+	json_measures["DIM_FT_ctx"].push_back(FTcomp_RNN.dim_signal);
+	json_measures["COND_ctx"].push_back(FTcomp_RNN.cond_signal);
+	json_measures["COND_total_ctx"].push_back(FTcomp_RNN.cond_total);
 
 //	*************************
 // 	write output to files
@@ -684,7 +684,7 @@ int main (int argc, char* argv[]) {
 		}
 
 		// spanning vectors
-		FTcomp_ctx.S_total.save(S_total_ctx_file, arma::raw_ascii);
+		FTcomp_RNN.S_total.save(S_total_RNN_file, arma::raw_ascii);
 
 		// Save file
 		std::ofstream single_trial_file(para.folder + "weights_single_trial.json"); if (!single_trial_file) exit(EXIT_FAILURE);
@@ -694,7 +694,7 @@ int main (int argc, char* argv[]) {
 
 	bool write_FULL=1;
 	log_file << "\t \t \t Write summary data to files"<< std::endl;
-	write_measures_final(json_measures, FTcomp_ctx, RMSE_train, RMSE_test, Wnorm_ctx, "ctx", para, write_FULL);
+	write_measures_final(json_measures, FTcomp_RNN, RMSE_train, RMSE_test, Wnorm_ctx, "ctx", para, write_FULL);
 
 	simcount_file << 1 << std::endl;
 
@@ -710,7 +710,7 @@ int main (int argc, char* argv[]) {
    	nuRNN_test_file.close();
 	nuRNN_openloop_file.close();
 
-	S_total_ctx_file.close();
+	S_total_RNN_file.close();
 
 	log_file.close();
 	simcount_file.close();

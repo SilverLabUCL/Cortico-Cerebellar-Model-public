@@ -1,0 +1,30 @@
+{
+  "title": "Geometric determinants of time series learning and attractor stability in closed-loop circuits: simulation and analysis code",
+  "upload_type": "software",
+  "description": "<p>C++ simulation code and MATLAB analysis scripts accompanying the manuscript \"Geometric determinants of time series learning and attractor stability in closed-loop circuits\" ([Alessandro Barri, Harsha Gurnani and R. Angus Silver], [preprint]).</p><p>The processed data used to generate the figures are archived separately on figshare (see the README of the repository).</p>",
+  "creators": [
+    {
+      "name": "Barri, Alessandro",
+      "affiliation": "Department of Neuroscience, Physiology and Pharmacology, University College London, London, United Kingdom.",
+      "orcid": "0000-0003-1446-7448"
+    },
+    {
+      "name": "Gurnani, Harsha",
+      "affiliation": "Department of Neuroscience, Physiology and Pharmacology, University College London, London, United Kingdom. Current address: Center for Data Science, NYU, New York, USA.",
+      "orcid": "0000-0001-6383-3104"
+    },
+    {
+      "name": "Silver, R. Angus",
+      "affiliation": "Department of Neuroscience, Physiology and Pharmacology, University College London, London, United Kingdom.",
+      "orcid": "0000-0002-5480-6638"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "cortico-cerebellar system",
+    "feed-forward neural network",
+    "recurrent neural network",
+    "C++",
+    "MATLAB"
+  ]
+}
